@@ -4,7 +4,14 @@ import 'package:flutter/material.dart';
 /// Contrast ratios are checked in test/unit/theme_contrast_test.dart.
 @immutable
 class FinanceColors extends ThemeExtension<FinanceColors> {
-  const FinanceColors({required this.income, required this.expense, required this.warning, required this.over});
+  const FinanceColors({
+    required this.income,
+    required this.expense,
+    required this.warning,
+    required this.over,
+    required this.chartIncome,
+    required this.chartExpense,
+  });
 
   /// Money in. Expenses stay neutral on purpose: red is reserved for "over budget".
   final Color income;
@@ -12,12 +19,27 @@ class FinanceColors extends ThemeExtension<FinanceColors> {
   final Color warning;
   final Color over;
 
+  /// Chart marks only, never text. A separate pair because the text colors fail as bars:
+  /// near-white expense reads as gray and both sit above the dark lightness band.
+  /// Validated with the dataviz palette checks against [AppPalette.surface].
+  final Color chartIncome;
+  final Color chartExpense;
+
   @override
-  FinanceColors copyWith({Color? income, Color? expense, Color? warning, Color? over}) => FinanceColors(
+  FinanceColors copyWith({
+    Color? income,
+    Color? expense,
+    Color? warning,
+    Color? over,
+    Color? chartIncome,
+    Color? chartExpense,
+  }) => FinanceColors(
     income: income ?? this.income,
     expense: expense ?? this.expense,
     warning: warning ?? this.warning,
     over: over ?? this.over,
+    chartIncome: chartIncome ?? this.chartIncome,
+    chartExpense: chartExpense ?? this.chartExpense,
   );
 
   @override
@@ -28,6 +50,8 @@ class FinanceColors extends ThemeExtension<FinanceColors> {
           expense: Color.lerp(expense, other.expense, t)!,
           warning: Color.lerp(warning, other.warning, t)!,
           over: Color.lerp(over, other.over, t)!,
+          chartIncome: Color.lerp(chartIncome, other.chartIncome, t)!,
+          chartExpense: Color.lerp(chartExpense, other.chartExpense, t)!,
         );
 }
 
@@ -53,6 +77,8 @@ abstract final class AppPalette {
   static const warning = Color(0xFFF2C25B);
   static const over = Color(0xFFFF8A80);
   static const onOver = Color(0xFF3B0A06);
+  static const chartIncome = Color(0xFF1FA874);
+  static const chartExpense = Color(0xFF8A80E6);
 }
 
 ThemeData buildAppTheme() {
@@ -102,6 +128,8 @@ ThemeData buildAppTheme() {
         expense: AppPalette.onSurface,
         warning: AppPalette.warning,
         over: AppPalette.over,
+        chartIncome: AppPalette.chartIncome,
+        chartExpense: AppPalette.chartExpense,
       ),
     ],
     appBarTheme: const AppBarTheme(

@@ -12,6 +12,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mybudget/app/providers.dart';
 import 'package:mybudget/app/theme/app_theme.dart';
 import 'package:mybudget/database/app_database.dart';
+import 'package:mybudget/features/analytics/domain/analytics_repository.dart';
+import 'package:mybudget/features/analytics/presentation/analytics_screen.dart';
 import 'package:mybudget/features/auth/presentation/sign_in_screen.dart';
 import 'package:mybudget/features/budgets/domain/budget_repository.dart';
 import 'package:mybudget/features/budgets/presentation/budgets_screen.dart';
@@ -117,6 +119,35 @@ class _Budgets implements BudgetRepository {
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
 
+class _Analytics implements AnalyticsRepository {
+  @override
+  Stream<List<MonthFlow>> watchMonthlyFlow({required String currency, required String lastMonth, int months = 6}) =>
+      Stream.value([
+        for (final (m, inc, exp) in [
+          ('2026-04', 3200000, 2410000),
+          ('2026-05', 3200000, 2980000),
+          ('2026-06', 3450000, 2650000),
+          ('2026-07', 3200000, 3520000),
+          ('2026-08', 3200000, 2870000),
+          ('2026-09', 3200000, 2240000),
+          ('2026-10', 3200000, 1047250),
+        ].skip(7 - months))
+          MonthFlow(m, incomeMinor: inc, expenseMinor: exp),
+      ]);
+
+  @override
+  Stream<List<CategorySpend>> watchCategorySpend({
+    required String currency,
+    required String month,
+    String? previousUntil,
+  }) => Stream.value(const [
+    CategorySpend('rent', currentMinor: 950000, previousMinor: 950000),
+    CategorySpend('groceries', currentMinor: 48750, previousMinor: 41200),
+    CategorySpend('food', currentMinor: 36500, previousMinor: 52000),
+    CategorySpend('transport', currentMinor: 12000, previousMinor: 0),
+  ]);
+}
+
 Future<void> _loadFonts() async {
   final plex = FontLoader('IBMPlexSans');
   for (final w in ['Regular', 'Medium', 'SemiBold', 'Bold']) {
@@ -136,14 +167,18 @@ Future<void> _loadFonts() async {
   await icons.load();
 }
 
+final _overrides = [
+  transactionRepositoryProvider.overrideWithValue(_Tx()),
+  budgetRepositoryProvider.overrideWithValue(_Budgets()),
+  analyticsRepositoryProvider.overrideWithValue(_Analytics()),
+  categoriesByIdProvider.overrideWith((ref) => Stream.value(_cats)),
+  currencyProvider.overrideWithValue('TND'),
+  workspaceProvider.overrideWithValue('personal'),
+  todayProvider.overrideWithValue(_now),
+];
+
 Widget _frame(String title, Widget body, {Widget? fab}) => ProviderScope(
-  overrides: [
-    transactionRepositoryProvider.overrideWithValue(_Tx()),
-    budgetRepositoryProvider.overrideWithValue(_Budgets()),
-    categoriesByIdProvider.overrideWith((ref) => Stream.value(_cats)),
-    currencyProvider.overrideWithValue('TND'),
-    workspaceProvider.overrideWithValue('personal'),
-  ],
+  overrides: _overrides,
   child: MaterialApp(
     debugShowCheckedModeBanner: false,
     theme: buildAppTheme(),
@@ -194,6 +229,12 @@ void main() {
     'transactions phone',
     (t) => shot(t, 'transactions_phone', _frame('Activity', const TransactionsScreen())),
   );
+  Widget trends() => ProviderScope(
+    overrides: _overrides,
+    child: MaterialApp(debugShowCheckedModeBanner: false, theme: buildAppTheme(), home: const AnalyticsScreen()),
+  );
+  testWidgets('trends phone', (t) => shot(t, 'trends_phone', trends()));
+  testWidgets('trends desktop', (t) => shot(t, 'trends_desktop', trends(), size: const Size(1280, 860)));
   testWidgets('budgets phone', (t) => shot(t, 'budgets_phone', _frame('Budgets', const BudgetsScreen())));
   testWidgets(
     'sign in',

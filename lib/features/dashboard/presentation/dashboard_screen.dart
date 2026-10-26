@@ -52,6 +52,14 @@ class DashboardScreen extends ConsumerWidget {
               income: month?.income[currency] ?? 0,
               spent: month?.expense[currency] ?? 0,
             ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => context.push('/analytics'),
+                icon: const Icon(Icons.insights_outlined),
+                label: const Text('Trends'),
+              ),
+            ),
             if (others.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
@@ -75,7 +83,12 @@ class DashboardScreen extends ConsumerWidget {
                 action: TextButton(onPressed: () => context.go('/budgets'), child: const Text('Create a budget')),
               )
             else
-              for (final b in budgets) BudgetProgressTile(progress: b, categoryName: cats[b.budget.categoryId]?.name),
+              for (final b in budgets)
+                BudgetProgressTile(
+                  progress: b,
+                  categoryName: cats[b.budget.categoryId]?.name,
+                  today: ref.watch(todayProvider),
+                ),
             SectionHeader(
               'Recent activity',
               action: TextButton(onPressed: () => context.go('/transactions'), child: const Text('See all')),
