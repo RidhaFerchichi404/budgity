@@ -136,13 +136,16 @@ class _Analytics implements AnalyticsRepository {
       ]);
 
   @override
-  Stream<List<CategorySpend>> watchCategorySpend({required String currency, required String month}) =>
-      Stream.value(const [
-        CategorySpend('rent', currentMinor: 950000, previousMinor: 950000),
-        CategorySpend('groceries', currentMinor: 48750, previousMinor: 41200),
-        CategorySpend('food', currentMinor: 36500, previousMinor: 52000),
-        CategorySpend('transport', currentMinor: 12000, previousMinor: 0),
-      ]);
+  Stream<List<CategorySpend>> watchCategorySpend({
+    required String currency,
+    required String month,
+    String? previousUntil,
+  }) => Stream.value(const [
+    CategorySpend('rent', currentMinor: 950000, previousMinor: 950000),
+    CategorySpend('groceries', currentMinor: 48750, previousMinor: 41200),
+    CategorySpend('food', currentMinor: 36500, previousMinor: 52000),
+    CategorySpend('transport', currentMinor: 12000, previousMinor: 0),
+  ]);
 }
 
 Future<void> _loadFonts() async {

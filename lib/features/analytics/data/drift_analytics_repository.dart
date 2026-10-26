@@ -36,19 +36,24 @@ class DriftAnalyticsRepository implements AnalyticsRepository {
   }
 
   @override
-  Stream<List<CategorySpend>> watchCategorySpend({required String currency, required String month}) {
+  Stream<List<CategorySpend>> watchCategorySpend({
+    required String currency,
+    required String month,
+    String? previousUntil,
+  }) {
     final prev = addMonths(month, -1);
     return _db
         .customSelect(
           'SELECT category_id, '
           'SUM(CASE WHEN substr(transaction_date, 1, 7) = ? THEN amount_minor ELSE 0 END) AS cur, '
-          'SUM(CASE WHEN substr(transaction_date, 1, 7) = ? THEN amount_minor ELSE 0 END) AS prev '
+          'SUM(CASE WHEN substr(transaction_date, 1, 7) = ? AND transaction_date <= ? THEN amount_minor ELSE 0 END) AS prev '
           'FROM transactions WHERE deleted_at IS NULL AND type = \'expense\' AND workspace = ? '
           'AND currency_code = ? AND transaction_date >= ? AND transaction_date < ? '
           'GROUP BY category_id HAVING cur > 0 ORDER BY cur DESC',
           variables: [
             Variable.withString(month),
             Variable.withString(prev),
+            Variable.withString(previousUntil ?? '$prev-31'),
             Variable.withString(workspace),
             Variable.withString(currency),
             Variable.withString('$prev-01'),

@@ -209,13 +209,15 @@ class CategorySpendBars extends StatelessWidget {
     required this.rows,
     required this.categories,
     required this.currency,
-    required this.previousMonth,
+    required this.comparedTo,
   });
 
   final List<CategorySpend> rows;
   final Map<String, Category> categories;
   final String currency;
-  final String previousMonth;
+
+  /// What the change is measured against: 'Sep', or 'Sep 1–26' for a month in progress.
+  final String comparedTo;
 
   @override
   Widget build(BuildContext context) {
@@ -229,7 +231,7 @@ class CategorySpendBars extends StatelessWidget {
             category: categories[r.categoryId],
             fraction: max == 0 ? 0 : r.currentMinor / max,
             currency: currency,
-            previousMonth: previousMonth,
+            comparedTo: comparedTo,
           ),
         ],
       ],
@@ -243,14 +245,14 @@ class _CategoryRow extends StatelessWidget {
     required this.category,
     required this.fraction,
     required this.currency,
-    required this.previousMonth,
+    required this.comparedTo,
   });
 
   final CategorySpend spend;
   final Category? category;
   final double fraction;
   final String currency;
-  final String previousMonth;
+  final String comparedTo;
 
   @override
   Widget build(BuildContext context) {
@@ -259,7 +261,7 @@ class _CategoryRow extends StatelessWidget {
     final name = category?.name ?? 'Uncategorized';
     final amount = Money(spend.currentMinor, currency).format();
     final change = spend.changePercent;
-    final prev = monthLabel(previousMonth);
+    final prev = comparedTo;
     // Status in words and an arrow, never color alone. More spending is the cautionary direction.
     final (IconData? icon, Color color, String text, String spoken) = switch (change) {
       null => (null, theme.colorScheme.onSurfaceVariant, 'None in $prev', 'nothing spent in $prev'),

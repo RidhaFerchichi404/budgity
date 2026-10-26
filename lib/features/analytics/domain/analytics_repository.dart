@@ -26,8 +26,13 @@ abstract interface class AnalyticsRepository {
   /// [months] consecutive months ending at [lastMonth], oldest first; months without data are zero.
   Stream<List<MonthFlow>> watchMonthlyFlow({required String currency, required String lastMonth, int months = 6});
 
-  /// Categories with spending in [month], largest first.
-  Stream<List<CategorySpend>> watchCategorySpend({required String currency, required String month});
+  /// Categories with spending in [month], largest first. The previous month counts only
+  /// up to [previousUntil] ('yyyy-MM-dd') when given, so a month in progress compares like for like.
+  Stream<List<CategorySpend>> watchCategorySpend({
+    required String currency,
+    required String month,
+    String? previousUntil,
+  });
 }
 
 String monthKey(DateTime d) => '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}';

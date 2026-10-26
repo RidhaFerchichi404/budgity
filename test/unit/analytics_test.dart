@@ -80,6 +80,18 @@ void main() {
       expect(rows.map((r) => r.changePercent), [-5, 25, null]);
     });
 
+    test('a month in progress compares with the previous month up to the same day', () async {
+      final rows = await analytics
+          .watchCategorySpend(currency: 'TND', month: '2026-10', previousUntil: '2026-09-10')
+          .first;
+      expect(rows.map((r) => (r.categoryId, r.previousMinor)), [
+        (rent, 950000), // Sep 2
+        (food, 0), // Sep 15 is after the cutoff
+        (null, 0),
+      ]);
+      expect(rows[1].changePercent, isNull);
+    });
+
     test('freelancer analytics only sees freelancer rows', () async {
       final repo = DriftAnalyticsRepository(db, workspace: 'freelancer');
       expect(
@@ -146,6 +158,20 @@ void main() {
       expect(c.read(analyticsViewProvider), (windowEnd: '2026-10', selected: '2026-10'));
       c.read(analyticsViewProvider.notifier).step(1);
       expect(c.read(analyticsViewProvider).selected, '2026-10');
+    });
+
+    test('a month in progress is compared up to the same day, clamped to the shorter month', () {
+      String? until(DateTime today, [String? select]) {
+        final c = ProviderContainer(overrides: [todayProvider.overrideWithValue(today)]);
+        addTearDown(c.dispose);
+        if (select != null) c.read(analyticsViewProvider.notifier).select(select);
+        return c.read(compareUntilProvider);
+      }
+
+      expect(until(DateTime(2026, 10, 26)), '2026-09-26');
+      expect(until(DateTime(2026, 3, 31)), '2026-02-28');
+      expect(until(DateTime(2026, 1, 5)), '2025-12-05');
+      expect(until(DateTime(2026, 10, 26), '2026-08'), isNull, reason: 'past months compare in full');
     });
 
     test('selecting inside the window keeps it; stepping past its start scrolls it', () {

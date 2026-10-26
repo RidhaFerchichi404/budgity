@@ -37,7 +37,6 @@ class AnalyticsViewNotifier extends Notifier<AnalyticsView> {
   }
 }
 
-/// One month more than the chart shows, so the oldest visible month still has a "before".
 final _flowProvider = StreamProvider<List<MonthFlow>>((ref) {
   final view = ref.watch(analyticsViewProvider);
   return ref
@@ -45,13 +44,40 @@ final _flowProvider = StreamProvider<List<MonthFlow>>((ref) {
       .watchMonthlyFlow(
         currency: ref.watch(currencyProvider),
         lastMonth: view.windowEnd,
-        months: AnalyticsViewNotifier.months + 1,
+        months: AnalyticsViewNotifier.months,
       );
+});
+
+/// A month in progress is compared with the previous month only up to the same day
+/// (Oct 1–26 vs. Sep 1–26); a finished month is compared in full (null).
+final compareUntilProvider = Provider<String?>((ref) {
+  final month = ref.watch(analyticsViewProvider.select((v) => v.selected));
+  final today = ref.watch(todayProvider);
+  if (month != monthKey(today)) return null;
+  final prev = addMonths(month, -1);
+  final lastDay = DateTime(int.parse(prev.substring(0, 4)), int.parse(prev.substring(5)) + 1, 0).day;
+  return '$prev-${(today.day < lastDay ? today.day : lastDay).toString().padLeft(2, '0')}';
 });
 
 final _categoryProvider = StreamProvider<List<CategorySpend>>((ref) {
   final month = ref.watch(analyticsViewProvider.select((v) => v.selected));
-  return ref.watch(analyticsRepositoryProvider).watchCategorySpend(currency: ref.watch(currencyProvider), month: month);
+  return ref
+      .watch(analyticsRepositoryProvider)
+      .watchCategorySpend(
+        currency: ref.watch(currencyProvider),
+        month: month,
+        previousUntil: ref.watch(compareUntilProvider),
+      );
+});
+
+/// Previous month's spending over the same span the comparison uses.
+final _previousSpendProvider = StreamProvider<int>((ref) {
+  final prev = addMonths(ref.watch(analyticsViewProvider.select((v) => v.selected)), -1);
+  final currency = ref.watch(currencyProvider);
+  return ref
+      .watch(transactionRepositoryProvider)
+      .watchSummary(from: '$prev-01', to: ref.watch(compareUntilProvider) ?? '$prev-31')
+      .map((s) => s.expense[currency] ?? 0);
 });
 
 class AnalyticsScreen extends ConsumerWidget {
@@ -69,7 +95,10 @@ class AnalyticsScreen extends ConsumerWidget {
     final atCurrent = view.selected == monthKey(ref.watch(todayProvider));
 
     final selected = flows?.where((f) => f.month == view.selected).firstOrNull;
-    final before = flows?.where((f) => f.month == addMonths(view.selected, -1)).firstOrNull;
+    final until = ref.watch(compareUntilProvider);
+    final prevName = monthLabel(addMonths(view.selected, -1));
+    final comparedTo = until == null ? prevName : '$prevName 1–${int.parse(until.substring(8))}';
+    final workspace = ref.watch(workspaceProvider) == 'freelancer' ? 'Freelancer · ' : '';
 
     return Scaffold(
       appBar: AppBar(title: const Text('Trends')),
@@ -108,11 +137,14 @@ class AnalyticsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Income vs. spending', style: theme.textTheme.titleSmall),
-                      Text('Last ${AnalyticsViewNotifier.months} months, $currency', style: theme.textTheme.bodySmall),
+                      Text(
+                        '${workspace}Last ${AnalyticsViewNotifier.months} months, $currency',
+                        style: theme.textTheme.bodySmall,
+                      ),
                       const SizedBox(height: 16),
                       if (flows != null)
                         MonthlyFlowChart(
-                          flows: flows.sublist(1),
+                          flows: flows,
                           currency: currency,
                           selected: view.selected,
                           onSelect: notifier.select,
@@ -121,7 +153,13 @@ class AnalyticsScreen extends ConsumerWidget {
                         const SizedBox(height: 16),
                         const Divider(),
                         const SizedBox(height: 12),
-                        _MonthSummary(flow: selected, previous: before, currency: currency),
+                        _MonthSummary(
+                          flow: selected,
+                          previousSpend: ref.watch(_previousSpendProvider).value,
+                          comparedTo: comparedTo,
+                          inProgress: until != null,
+                          currency: currency,
+                        ),
                       ],
                     ],
                   ),
@@ -141,12 +179,7 @@ class AnalyticsScreen extends ConsumerWidget {
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: CategorySpendBars(
-                      rows: spend,
-                      categories: cats,
-                      currency: currency,
-                      previousMonth: addMonths(view.selected, -1),
-                    ),
+                    child: CategorySpendBars(rows: spend, categories: cats, currency: currency, comparedTo: comparedTo),
                   ),
                 ),
             ],
@@ -159,18 +192,25 @@ class AnalyticsScreen extends ConsumerWidget {
 
 /// The selected month's numbers in text: the chart's table view, plus the month-over-month change.
 class _MonthSummary extends StatelessWidget {
-  const _MonthSummary({required this.flow, required this.previous, required this.currency});
+  const _MonthSummary({
+    required this.flow,
+    required this.previousSpend,
+    required this.comparedTo,
+    required this.inProgress,
+    required this.currency,
+  });
 
   final MonthFlow flow;
-  final MonthFlow? previous;
+  final int? previousSpend;
+  final String comparedTo;
+  final bool inProgress;
   final String currency;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final prev = previous?.expenseMinor ?? 0;
+    final prev = previousSpend ?? 0;
     final change = prev == 0 ? null : ((flow.expenseMinor - prev) * 100 / prev).round();
-    final prevName = previous == null ? '' : monthLabel(previous!.month);
 
     Widget stat(String label, Widget value) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,9 +259,13 @@ class _MonthSummary extends StatelessWidget {
         if (change != null) ...[
           const SizedBox(height: 12),
           Text(
-            change == 0
-                ? 'Spending was the same as in $prevName.'
-                : 'Spending was ${change.abs()}% ${change > 0 ? 'higher' : 'lower'} than in $prevName.',
+            inProgress
+                ? (change == 0
+                      ? 'So far, spending matches $comparedTo.'
+                      : 'So far, spending is ${change.abs()}% ${change > 0 ? 'higher' : 'lower'} than $comparedTo.')
+                : (change == 0
+                      ? 'Spending was the same as in $comparedTo.'
+                      : 'Spending was ${change.abs()}% ${change > 0 ? 'higher' : 'lower'} than in $comparedTo.'),
             style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
         ],
