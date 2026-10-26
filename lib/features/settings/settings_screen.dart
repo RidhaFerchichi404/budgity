@@ -16,11 +16,15 @@ class SettingsScreen extends ConsumerWidget {
     final email = ref.watch(supabaseProvider).auth.currentUser?.email ?? '';
     final currency = ref.watch(currencyProvider);
 
-    Future<void> save({String? name, String? cur}) async {
+    Future<void> save({String? name, String? cur, bool? freelancer}) async {
       try {
         await ref
             .read(profileRepositoryProvider)
-            .update(displayName: name ?? profile?.displayName ?? '', currencyCode: cur ?? currency);
+            .update(
+              displayName: name ?? profile?.displayName ?? '',
+              currencyCode: cur ?? currency,
+              freelancerEnabled: freelancer,
+            );
       } on ValidationException catch (e) {
         if (context.mounted) showError(context, e);
       }
@@ -57,6 +61,13 @@ class SettingsScreen extends ConsumerWidget {
             items: [for (final c in Money.supportedCurrencies) DropdownMenuItem(value: c, child: Text(c))],
             onChanged: (v) => save(cur: v),
           ),
+        ),
+        SwitchListTile(
+          secondary: const Icon(Icons.work_outline),
+          title: const Text('Freelancer workspace'),
+          subtitle: const Text('Business income and expenses, kept apart from your personal money'),
+          value: profile?.freelancerEnabled ?? false,
+          onChanged: profile == null ? null : (v) => save(freelancer: v),
         ),
         ListTile(
           leading: const Icon(Icons.sync),

@@ -7,18 +7,20 @@ import '../../../database/server_rows.dart';
 import '../domain/budget_repository.dart';
 
 class DriftBudgetRepository implements BudgetRepository {
-  DriftBudgetRepository(this._db, this._userId);
+  /// Reads and creates are scoped to [workspace] (ADR 0006).
+  DriftBudgetRepository(this._db, this._userId, {this.workspace = 'personal'});
 
   final AppDatabase _db;
   final String Function() _userId;
+  final String workspace;
 
   static const _uuid = Uuid();
   static final _date = RegExp(r'^\d{4}-\d{2}-\d{2}$');
 
   @override
   Stream<List<BudgetProgress>> watchBudgets({String? onDate}) {
-    final vars = <Variable>[];
-    var where = 'b.deleted_at IS NULL';
+    final vars = <Variable>[Variable.withString(workspace)];
+    var where = 'b.deleted_at IS NULL AND b.workspace = ?';
     if (onDate != null) {
       where += ' AND b.period_start <= ? AND b.period_end >= ?';
       vars.addAll([Variable.withString(onDate), Variable.withString(onDate)]);
@@ -27,7 +29,7 @@ class DriftBudgetRepository implements BudgetRepository {
         .customSelect(
           'SELECT b.*, COALESCE(SUM(t.amount_minor), 0) AS spent FROM budgets b '
           'LEFT JOIN transactions t ON t.deleted_at IS NULL AND t.type = \'expense\' '
-          'AND t.currency_code = b.currency_code '
+          'AND t.workspace = b.workspace AND t.currency_code = b.currency_code '
           'AND t.transaction_date BETWEEN b.period_start AND b.period_end '
           'AND (b.category_id IS NULL OR t.category_id = b.category_id) '
           'WHERE $where GROUP BY b.id ORDER BY b.period_start DESC, b.name',
@@ -51,6 +53,7 @@ class DriftBudgetRepository implements BudgetRepository {
     final row = Budget(
       id: _uuid.v4(),
       userId: _userId(),
+      workspace: workspace,
       categoryId: categoryId,
       name: name.trim(),
       amountMinor: amountMinor,
@@ -108,7 +111,7 @@ class DriftBudgetRepository implements BudgetRepository {
     if (b.periodEnd.compareTo(b.periodStart) < 0) throw const ValidationException('End date is before start date');
     if (b.categoryId != null) {
       final cat = await (_db.select(_db.categories)..where((c) => c.id.equals(b.categoryId!))).getSingleOrNull();
-      if (cat == null || cat.type != 'expense') {
+      if (cat == null || cat.type != 'expense' || cat.workspace != b.workspace) {
         throw const ValidationException('Budget category must be an expense category');
       }
     }

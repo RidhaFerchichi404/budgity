@@ -13,7 +13,10 @@ final transactionFilterProvider = NotifierProvider<_FilterNotifier, TransactionF
 
 class _FilterNotifier extends Notifier<TransactionFilter> {
   @override
-  TransactionFilter build() => TransactionFilter.all;
+  TransactionFilter build() {
+    ref.watch(workspaceProvider); // a category filter from the other workspace would match nothing
+    return TransactionFilter.all;
+  }
 
   void set(TransactionFilter f) => state = f;
 }

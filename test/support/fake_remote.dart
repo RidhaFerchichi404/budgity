@@ -25,9 +25,13 @@ class FakeServer {
     }
     final cur = table[id];
     final p = op['payload'] as Json;
+    // workspace is immutable; ops without one (v1.0.0) are personal (ADR 0006).
+    final ws = cur?['workspace'] ?? p['workspace'] ?? 'personal';
     final catId = p['category_id'] as String?;
-    if (catId != null && !tables['categories']!.containsKey(catId)) {
-      return {'op_id': opId, 'status': 'blocked'};
+    if (catId != null) {
+      final cat = tables['categories']![catId];
+      if (cat == null) return {'op_id': opId, 'status': 'blocked'};
+      if (cat['workspace'] != ws) return {'op_id': opId, 'status': 'invalid', 'error': 'category not available'};
     }
     Json res;
     switch (op['operation']) {
@@ -38,6 +42,7 @@ class FakeServer {
           ...p,
           'id': id,
           'user_id': userId,
+          'workspace': ws,
           'deleted_at': null,
           'version': 1,
           'icon_key': p['icon_key'] ?? 'tag',
@@ -50,7 +55,14 @@ class FakeServer {
         table[id] = _stamp(
           op['operation'] == 'delete'
               ? {...cur, 'deleted_at': DateTime.now().toUtc().toIso8601String(), 'version': cur['version'] + 1}
-              : {...cur, ...p, 'created_at': cur['created_at'], 'deleted_at': null, 'version': cur['version'] + 1},
+              : {
+                  ...cur,
+                  ...p,
+                  'workspace': ws,
+                  'created_at': cur['created_at'],
+                  'deleted_at': null,
+                  'version': cur['version'] + 1,
+                },
         );
     }
     res = {'status': 'applied', 'row': table[id]};
@@ -64,8 +76,12 @@ class FakeServer {
     tables[table]![id] = _stamp({...cur, ...changes, 'version': cur['version'] + 1});
   }
 
-  void seedProfile() =>
-      tables['profiles']![userId] = _stamp({'id': userId, 'display_name': '', 'currency_code': 'TND'});
+  void seedProfile() => tables['profiles']![userId] = _stamp({
+    'id': userId,
+    'display_name': '',
+    'currency_code': 'TND',
+    'freelancer_enabled': false,
+  });
 }
 
 /// One device's connection to a [FakeServer].

@@ -41,6 +41,21 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
     requiredDuringInsert: false,
     defaultValue: const Constant('TND'),
   );
+  static const VerificationMeta _freelancerEnabledMeta = const VerificationMeta(
+    'freelancerEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> freelancerEnabled = GeneratedColumn<bool>(
+    'freelancer_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("freelancer_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -69,6 +84,7 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
     id,
     displayName,
     currencyCode,
+    freelancerEnabled,
     updatedAt,
     changeSeq,
   ];
@@ -107,6 +123,15 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
         ),
       );
     }
+    if (data.containsKey('freelancer_enabled')) {
+      context.handle(
+        _freelancerEnabledMeta,
+        freelancerEnabled.isAcceptableOrUnknown(
+          data['freelancer_enabled']!,
+          _freelancerEnabledMeta,
+        ),
+      );
+    }
     if (data.containsKey('updated_at')) {
       context.handle(
         _updatedAtMeta,
@@ -142,6 +167,10 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
         DriftSqlType.string,
         data['${effectivePrefix}currency_code'],
       )!,
+      freelancerEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}freelancer_enabled'],
+      )!,
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -163,12 +192,14 @@ class Profile extends DataClass implements Insertable<Profile> {
   final String id;
   final String displayName;
   final String currencyCode;
+  final bool freelancerEnabled;
   final DateTime updatedAt;
   final int changeSeq;
   const Profile({
     required this.id,
     required this.displayName,
     required this.currencyCode,
+    required this.freelancerEnabled,
     required this.updatedAt,
     required this.changeSeq,
   });
@@ -178,6 +209,7 @@ class Profile extends DataClass implements Insertable<Profile> {
     map['id'] = Variable<String>(id);
     map['display_name'] = Variable<String>(displayName);
     map['currency_code'] = Variable<String>(currencyCode);
+    map['freelancer_enabled'] = Variable<bool>(freelancerEnabled);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['change_seq'] = Variable<int>(changeSeq);
     return map;
@@ -188,6 +220,7 @@ class Profile extends DataClass implements Insertable<Profile> {
       id: Value(id),
       displayName: Value(displayName),
       currencyCode: Value(currencyCode),
+      freelancerEnabled: Value(freelancerEnabled),
       updatedAt: Value(updatedAt),
       changeSeq: Value(changeSeq),
     );
@@ -202,6 +235,7 @@ class Profile extends DataClass implements Insertable<Profile> {
       id: serializer.fromJson<String>(json['id']),
       displayName: serializer.fromJson<String>(json['displayName']),
       currencyCode: serializer.fromJson<String>(json['currencyCode']),
+      freelancerEnabled: serializer.fromJson<bool>(json['freelancerEnabled']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       changeSeq: serializer.fromJson<int>(json['changeSeq']),
     );
@@ -213,6 +247,7 @@ class Profile extends DataClass implements Insertable<Profile> {
       'id': serializer.toJson<String>(id),
       'displayName': serializer.toJson<String>(displayName),
       'currencyCode': serializer.toJson<String>(currencyCode),
+      'freelancerEnabled': serializer.toJson<bool>(freelancerEnabled),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'changeSeq': serializer.toJson<int>(changeSeq),
     };
@@ -222,12 +257,14 @@ class Profile extends DataClass implements Insertable<Profile> {
     String? id,
     String? displayName,
     String? currencyCode,
+    bool? freelancerEnabled,
     DateTime? updatedAt,
     int? changeSeq,
   }) => Profile(
     id: id ?? this.id,
     displayName: displayName ?? this.displayName,
     currencyCode: currencyCode ?? this.currencyCode,
+    freelancerEnabled: freelancerEnabled ?? this.freelancerEnabled,
     updatedAt: updatedAt ?? this.updatedAt,
     changeSeq: changeSeq ?? this.changeSeq,
   );
@@ -240,6 +277,9 @@ class Profile extends DataClass implements Insertable<Profile> {
       currencyCode: data.currencyCode.present
           ? data.currencyCode.value
           : this.currencyCode,
+      freelancerEnabled: data.freelancerEnabled.present
+          ? data.freelancerEnabled.value
+          : this.freelancerEnabled,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       changeSeq: data.changeSeq.present ? data.changeSeq.value : this.changeSeq,
     );
@@ -251,6 +291,7 @@ class Profile extends DataClass implements Insertable<Profile> {
           ..write('id: $id, ')
           ..write('displayName: $displayName, ')
           ..write('currencyCode: $currencyCode, ')
+          ..write('freelancerEnabled: $freelancerEnabled, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('changeSeq: $changeSeq')
           ..write(')'))
@@ -258,8 +299,14 @@ class Profile extends DataClass implements Insertable<Profile> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, displayName, currencyCode, updatedAt, changeSeq);
+  int get hashCode => Object.hash(
+    id,
+    displayName,
+    currencyCode,
+    freelancerEnabled,
+    updatedAt,
+    changeSeq,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -267,6 +314,7 @@ class Profile extends DataClass implements Insertable<Profile> {
           other.id == this.id &&
           other.displayName == this.displayName &&
           other.currencyCode == this.currencyCode &&
+          other.freelancerEnabled == this.freelancerEnabled &&
           other.updatedAt == this.updatedAt &&
           other.changeSeq == this.changeSeq);
 }
@@ -275,6 +323,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
   final Value<String> id;
   final Value<String> displayName;
   final Value<String> currencyCode;
+  final Value<bool> freelancerEnabled;
   final Value<DateTime> updatedAt;
   final Value<int> changeSeq;
   final Value<int> rowid;
@@ -282,6 +331,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     this.id = const Value.absent(),
     this.displayName = const Value.absent(),
     this.currencyCode = const Value.absent(),
+    this.freelancerEnabled = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.changeSeq = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -290,6 +340,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     required String id,
     this.displayName = const Value.absent(),
     this.currencyCode = const Value.absent(),
+    this.freelancerEnabled = const Value.absent(),
     required DateTime updatedAt,
     this.changeSeq = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -299,6 +350,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     Expression<String>? id,
     Expression<String>? displayName,
     Expression<String>? currencyCode,
+    Expression<bool>? freelancerEnabled,
     Expression<DateTime>? updatedAt,
     Expression<int>? changeSeq,
     Expression<int>? rowid,
@@ -307,6 +359,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
       if (id != null) 'id': id,
       if (displayName != null) 'display_name': displayName,
       if (currencyCode != null) 'currency_code': currencyCode,
+      if (freelancerEnabled != null) 'freelancer_enabled': freelancerEnabled,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (changeSeq != null) 'change_seq': changeSeq,
       if (rowid != null) 'rowid': rowid,
@@ -317,6 +370,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     Value<String>? id,
     Value<String>? displayName,
     Value<String>? currencyCode,
+    Value<bool>? freelancerEnabled,
     Value<DateTime>? updatedAt,
     Value<int>? changeSeq,
     Value<int>? rowid,
@@ -325,6 +379,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
       id: id ?? this.id,
       displayName: displayName ?? this.displayName,
       currencyCode: currencyCode ?? this.currencyCode,
+      freelancerEnabled: freelancerEnabled ?? this.freelancerEnabled,
       updatedAt: updatedAt ?? this.updatedAt,
       changeSeq: changeSeq ?? this.changeSeq,
       rowid: rowid ?? this.rowid,
@@ -342,6 +397,9 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     }
     if (currencyCode.present) {
       map['currency_code'] = Variable<String>(currencyCode.value);
+    }
+    if (freelancerEnabled.present) {
+      map['freelancer_enabled'] = Variable<bool>(freelancerEnabled.value);
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
@@ -361,6 +419,7 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
           ..write('id: $id, ')
           ..write('displayName: $displayName, ')
           ..write('currencyCode: $currencyCode, ')
+          ..write('freelancerEnabled: $freelancerEnabled, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('changeSeq: $changeSeq, ')
           ..write('rowid: $rowid')
@@ -450,6 +509,18 @@ class $CategoriesTable extends Categories
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _workspaceMeta = const VerificationMeta(
+    'workspace',
+  );
+  @override
+  late final GeneratedColumn<String> workspace = GeneratedColumn<String>(
+    'workspace',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('personal'),
+  );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -505,6 +576,7 @@ class $CategoriesTable extends Categories
     deletedAt,
     version,
     changeSeq,
+    workspace,
     name,
     type,
     iconKey,
@@ -567,6 +639,12 @@ class $CategoriesTable extends Categories
       context.handle(
         _changeSeqMeta,
         changeSeq.isAcceptableOrUnknown(data['change_seq']!, _changeSeqMeta),
+      );
+    }
+    if (data.containsKey('workspace')) {
+      context.handle(
+        _workspaceMeta,
+        workspace.isAcceptableOrUnknown(data['workspace']!, _workspaceMeta),
       );
     }
     if (data.containsKey('name')) {
@@ -634,6 +712,10 @@ class $CategoriesTable extends Categories
         DriftSqlType.int,
         data['${effectivePrefix}change_seq'],
       )!,
+      workspace: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}workspace'],
+      )!,
       name: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}name'],
@@ -667,6 +749,7 @@ class Category extends DataClass implements Insertable<Category> {
   final DateTime? deletedAt;
   final int version;
   final int changeSeq;
+  final String workspace;
   final String name;
   final String type;
   final String iconKey;
@@ -679,6 +762,7 @@ class Category extends DataClass implements Insertable<Category> {
     this.deletedAt,
     required this.version,
     required this.changeSeq,
+    required this.workspace,
     required this.name,
     required this.type,
     required this.iconKey,
@@ -696,6 +780,7 @@ class Category extends DataClass implements Insertable<Category> {
     }
     map['version'] = Variable<int>(version);
     map['change_seq'] = Variable<int>(changeSeq);
+    map['workspace'] = Variable<String>(workspace);
     map['name'] = Variable<String>(name);
     map['type'] = Variable<String>(type);
     map['icon_key'] = Variable<String>(iconKey);
@@ -714,6 +799,7 @@ class Category extends DataClass implements Insertable<Category> {
           : Value(deletedAt),
       version: Value(version),
       changeSeq: Value(changeSeq),
+      workspace: Value(workspace),
       name: Value(name),
       type: Value(type),
       iconKey: Value(iconKey),
@@ -734,6 +820,7 @@ class Category extends DataClass implements Insertable<Category> {
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       version: serializer.fromJson<int>(json['version']),
       changeSeq: serializer.fromJson<int>(json['changeSeq']),
+      workspace: serializer.fromJson<String>(json['workspace']),
       name: serializer.fromJson<String>(json['name']),
       type: serializer.fromJson<String>(json['type']),
       iconKey: serializer.fromJson<String>(json['iconKey']),
@@ -751,6 +838,7 @@ class Category extends DataClass implements Insertable<Category> {
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'version': serializer.toJson<int>(version),
       'changeSeq': serializer.toJson<int>(changeSeq),
+      'workspace': serializer.toJson<String>(workspace),
       'name': serializer.toJson<String>(name),
       'type': serializer.toJson<String>(type),
       'iconKey': serializer.toJson<String>(iconKey),
@@ -766,6 +854,7 @@ class Category extends DataClass implements Insertable<Category> {
     Value<DateTime?> deletedAt = const Value.absent(),
     int? version,
     int? changeSeq,
+    String? workspace,
     String? name,
     String? type,
     String? iconKey,
@@ -778,6 +867,7 @@ class Category extends DataClass implements Insertable<Category> {
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     version: version ?? this.version,
     changeSeq: changeSeq ?? this.changeSeq,
+    workspace: workspace ?? this.workspace,
     name: name ?? this.name,
     type: type ?? this.type,
     iconKey: iconKey ?? this.iconKey,
@@ -792,6 +882,7 @@ class Category extends DataClass implements Insertable<Category> {
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
       version: data.version.present ? data.version.value : this.version,
       changeSeq: data.changeSeq.present ? data.changeSeq.value : this.changeSeq,
+      workspace: data.workspace.present ? data.workspace.value : this.workspace,
       name: data.name.present ? data.name.value : this.name,
       type: data.type.present ? data.type.value : this.type,
       iconKey: data.iconKey.present ? data.iconKey.value : this.iconKey,
@@ -809,6 +900,7 @@ class Category extends DataClass implements Insertable<Category> {
           ..write('deletedAt: $deletedAt, ')
           ..write('version: $version, ')
           ..write('changeSeq: $changeSeq, ')
+          ..write('workspace: $workspace, ')
           ..write('name: $name, ')
           ..write('type: $type, ')
           ..write('iconKey: $iconKey, ')
@@ -826,6 +918,7 @@ class Category extends DataClass implements Insertable<Category> {
     deletedAt,
     version,
     changeSeq,
+    workspace,
     name,
     type,
     iconKey,
@@ -842,6 +935,7 @@ class Category extends DataClass implements Insertable<Category> {
           other.deletedAt == this.deletedAt &&
           other.version == this.version &&
           other.changeSeq == this.changeSeq &&
+          other.workspace == this.workspace &&
           other.name == this.name &&
           other.type == this.type &&
           other.iconKey == this.iconKey &&
@@ -856,6 +950,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   final Value<DateTime?> deletedAt;
   final Value<int> version;
   final Value<int> changeSeq;
+  final Value<String> workspace;
   final Value<String> name;
   final Value<String> type;
   final Value<String> iconKey;
@@ -869,6 +964,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     this.deletedAt = const Value.absent(),
     this.version = const Value.absent(),
     this.changeSeq = const Value.absent(),
+    this.workspace = const Value.absent(),
     this.name = const Value.absent(),
     this.type = const Value.absent(),
     this.iconKey = const Value.absent(),
@@ -883,6 +979,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     this.deletedAt = const Value.absent(),
     this.version = const Value.absent(),
     this.changeSeq = const Value.absent(),
+    this.workspace = const Value.absent(),
     required String name,
     required String type,
     this.iconKey = const Value.absent(),
@@ -902,6 +999,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Expression<DateTime>? deletedAt,
     Expression<int>? version,
     Expression<int>? changeSeq,
+    Expression<String>? workspace,
     Expression<String>? name,
     Expression<String>? type,
     Expression<String>? iconKey,
@@ -916,6 +1014,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (version != null) 'version': version,
       if (changeSeq != null) 'change_seq': changeSeq,
+      if (workspace != null) 'workspace': workspace,
       if (name != null) 'name': name,
       if (type != null) 'type': type,
       if (iconKey != null) 'icon_key': iconKey,
@@ -932,6 +1031,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Value<DateTime?>? deletedAt,
     Value<int>? version,
     Value<int>? changeSeq,
+    Value<String>? workspace,
     Value<String>? name,
     Value<String>? type,
     Value<String>? iconKey,
@@ -946,6 +1046,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       deletedAt: deletedAt ?? this.deletedAt,
       version: version ?? this.version,
       changeSeq: changeSeq ?? this.changeSeq,
+      workspace: workspace ?? this.workspace,
       name: name ?? this.name,
       type: type ?? this.type,
       iconKey: iconKey ?? this.iconKey,
@@ -978,6 +1079,9 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     if (changeSeq.present) {
       map['change_seq'] = Variable<int>(changeSeq.value);
     }
+    if (workspace.present) {
+      map['workspace'] = Variable<String>(workspace.value);
+    }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
     }
@@ -1006,6 +1110,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
           ..write('deletedAt: $deletedAt, ')
           ..write('version: $version, ')
           ..write('changeSeq: $changeSeq, ')
+          ..write('workspace: $workspace, ')
           ..write('name: $name, ')
           ..write('type: $type, ')
           ..write('iconKey: $iconKey, ')
@@ -1097,6 +1202,18 @@ class $TransactionsTable extends Transactions
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _workspaceMeta = const VerificationMeta(
+    'workspace',
+  );
+  @override
+  late final GeneratedColumn<String> workspace = GeneratedColumn<String>(
+    'workspace',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('personal'),
+  );
   static const VerificationMeta _categoryIdMeta = const VerificationMeta(
     'categoryId',
   );
@@ -1171,6 +1288,7 @@ class $TransactionsTable extends Transactions
     deletedAt,
     version,
     changeSeq,
+    workspace,
     categoryId,
     type,
     amountMinor,
@@ -1235,6 +1353,12 @@ class $TransactionsTable extends Transactions
       context.handle(
         _changeSeqMeta,
         changeSeq.isAcceptableOrUnknown(data['change_seq']!, _changeSeqMeta),
+      );
+    }
+    if (data.containsKey('workspace')) {
+      context.handle(
+        _workspaceMeta,
+        workspace.isAcceptableOrUnknown(data['workspace']!, _workspaceMeta),
       );
     }
     if (data.containsKey('category_id')) {
@@ -1330,6 +1454,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.int,
         data['${effectivePrefix}change_seq'],
       )!,
+      workspace: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}workspace'],
+      )!,
       categoryId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}category_id'],
@@ -1371,6 +1499,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
   final DateTime? deletedAt;
   final int version;
   final int changeSeq;
+  final String workspace;
   final String? categoryId;
   final String type;
   final int amountMinor;
@@ -1385,6 +1514,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     this.deletedAt,
     required this.version,
     required this.changeSeq,
+    required this.workspace,
     this.categoryId,
     required this.type,
     required this.amountMinor,
@@ -1404,6 +1534,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     }
     map['version'] = Variable<int>(version);
     map['change_seq'] = Variable<int>(changeSeq);
+    map['workspace'] = Variable<String>(workspace);
     if (!nullToAbsent || categoryId != null) {
       map['category_id'] = Variable<String>(categoryId);
     }
@@ -1426,6 +1557,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           : Value(deletedAt),
       version: Value(version),
       changeSeq: Value(changeSeq),
+      workspace: Value(workspace),
       categoryId: categoryId == null && nullToAbsent
           ? const Value.absent()
           : Value(categoryId),
@@ -1450,6 +1582,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       version: serializer.fromJson<int>(json['version']),
       changeSeq: serializer.fromJson<int>(json['changeSeq']),
+      workspace: serializer.fromJson<String>(json['workspace']),
       categoryId: serializer.fromJson<String?>(json['categoryId']),
       type: serializer.fromJson<String>(json['type']),
       amountMinor: serializer.fromJson<int>(json['amountMinor']),
@@ -1469,6 +1602,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'version': serializer.toJson<int>(version),
       'changeSeq': serializer.toJson<int>(changeSeq),
+      'workspace': serializer.toJson<String>(workspace),
       'categoryId': serializer.toJson<String?>(categoryId),
       'type': serializer.toJson<String>(type),
       'amountMinor': serializer.toJson<int>(amountMinor),
@@ -1486,6 +1620,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     Value<DateTime?> deletedAt = const Value.absent(),
     int? version,
     int? changeSeq,
+    String? workspace,
     Value<String?> categoryId = const Value.absent(),
     String? type,
     int? amountMinor,
@@ -1500,6 +1635,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     version: version ?? this.version,
     changeSeq: changeSeq ?? this.changeSeq,
+    workspace: workspace ?? this.workspace,
     categoryId: categoryId.present ? categoryId.value : this.categoryId,
     type: type ?? this.type,
     amountMinor: amountMinor ?? this.amountMinor,
@@ -1516,6 +1652,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
       version: data.version.present ? data.version.value : this.version,
       changeSeq: data.changeSeq.present ? data.changeSeq.value : this.changeSeq,
+      workspace: data.workspace.present ? data.workspace.value : this.workspace,
       categoryId: data.categoryId.present
           ? data.categoryId.value
           : this.categoryId,
@@ -1545,6 +1682,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           ..write('deletedAt: $deletedAt, ')
           ..write('version: $version, ')
           ..write('changeSeq: $changeSeq, ')
+          ..write('workspace: $workspace, ')
           ..write('categoryId: $categoryId, ')
           ..write('type: $type, ')
           ..write('amountMinor: $amountMinor, ')
@@ -1564,6 +1702,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     deletedAt,
     version,
     changeSeq,
+    workspace,
     categoryId,
     type,
     amountMinor,
@@ -1582,6 +1721,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           other.deletedAt == this.deletedAt &&
           other.version == this.version &&
           other.changeSeq == this.changeSeq &&
+          other.workspace == this.workspace &&
           other.categoryId == this.categoryId &&
           other.type == this.type &&
           other.amountMinor == this.amountMinor &&
@@ -1598,6 +1738,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
   final Value<DateTime?> deletedAt;
   final Value<int> version;
   final Value<int> changeSeq;
+  final Value<String> workspace;
   final Value<String?> categoryId;
   final Value<String> type;
   final Value<int> amountMinor;
@@ -1613,6 +1754,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     this.deletedAt = const Value.absent(),
     this.version = const Value.absent(),
     this.changeSeq = const Value.absent(),
+    this.workspace = const Value.absent(),
     this.categoryId = const Value.absent(),
     this.type = const Value.absent(),
     this.amountMinor = const Value.absent(),
@@ -1629,6 +1771,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     this.deletedAt = const Value.absent(),
     this.version = const Value.absent(),
     this.changeSeq = const Value.absent(),
+    this.workspace = const Value.absent(),
     this.categoryId = const Value.absent(),
     required String type,
     required int amountMinor,
@@ -1652,6 +1795,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     Expression<DateTime>? deletedAt,
     Expression<int>? version,
     Expression<int>? changeSeq,
+    Expression<String>? workspace,
     Expression<String>? categoryId,
     Expression<String>? type,
     Expression<int>? amountMinor,
@@ -1668,6 +1812,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (version != null) 'version': version,
       if (changeSeq != null) 'change_seq': changeSeq,
+      if (workspace != null) 'workspace': workspace,
       if (categoryId != null) 'category_id': categoryId,
       if (type != null) 'type': type,
       if (amountMinor != null) 'amount_minor': amountMinor,
@@ -1686,6 +1831,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     Value<DateTime?>? deletedAt,
     Value<int>? version,
     Value<int>? changeSeq,
+    Value<String>? workspace,
     Value<String?>? categoryId,
     Value<String>? type,
     Value<int>? amountMinor,
@@ -1702,6 +1848,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
       deletedAt: deletedAt ?? this.deletedAt,
       version: version ?? this.version,
       changeSeq: changeSeq ?? this.changeSeq,
+      workspace: workspace ?? this.workspace,
       categoryId: categoryId ?? this.categoryId,
       type: type ?? this.type,
       amountMinor: amountMinor ?? this.amountMinor,
@@ -1735,6 +1882,9 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     }
     if (changeSeq.present) {
       map['change_seq'] = Variable<int>(changeSeq.value);
+    }
+    if (workspace.present) {
+      map['workspace'] = Variable<String>(workspace.value);
     }
     if (categoryId.present) {
       map['category_id'] = Variable<String>(categoryId.value);
@@ -1770,6 +1920,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
           ..write('deletedAt: $deletedAt, ')
           ..write('version: $version, ')
           ..write('changeSeq: $changeSeq, ')
+          ..write('workspace: $workspace, ')
           ..write('categoryId: $categoryId, ')
           ..write('type: $type, ')
           ..write('amountMinor: $amountMinor, ')
@@ -1862,6 +2013,18 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _workspaceMeta = const VerificationMeta(
+    'workspace',
+  );
+  @override
+  late final GeneratedColumn<String> workspace = GeneratedColumn<String>(
+    'workspace',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('personal'),
+  );
   static const VerificationMeta _categoryIdMeta = const VerificationMeta(
     'categoryId',
   );
@@ -1939,6 +2102,7 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
     deletedAt,
     version,
     changeSeq,
+    workspace,
     categoryId,
     name,
     amountMinor,
@@ -2003,6 +2167,12 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
       context.handle(
         _changeSeqMeta,
         changeSeq.isAcceptableOrUnknown(data['change_seq']!, _changeSeqMeta),
+      );
+    }
+    if (data.containsKey('workspace')) {
+      context.handle(
+        _workspaceMeta,
+        workspace.isAcceptableOrUnknown(data['workspace']!, _workspaceMeta),
       );
     }
     if (data.containsKey('category_id')) {
@@ -2097,6 +2267,10 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
         DriftSqlType.int,
         data['${effectivePrefix}change_seq'],
       )!,
+      workspace: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}workspace'],
+      )!,
       categoryId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}category_id'],
@@ -2138,6 +2312,7 @@ class Budget extends DataClass implements Insertable<Budget> {
   final DateTime? deletedAt;
   final int version;
   final int changeSeq;
+  final String workspace;
   final String? categoryId;
   final String name;
   final int amountMinor;
@@ -2152,6 +2327,7 @@ class Budget extends DataClass implements Insertable<Budget> {
     this.deletedAt,
     required this.version,
     required this.changeSeq,
+    required this.workspace,
     this.categoryId,
     required this.name,
     required this.amountMinor,
@@ -2171,6 +2347,7 @@ class Budget extends DataClass implements Insertable<Budget> {
     }
     map['version'] = Variable<int>(version);
     map['change_seq'] = Variable<int>(changeSeq);
+    map['workspace'] = Variable<String>(workspace);
     if (!nullToAbsent || categoryId != null) {
       map['category_id'] = Variable<String>(categoryId);
     }
@@ -2193,6 +2370,7 @@ class Budget extends DataClass implements Insertable<Budget> {
           : Value(deletedAt),
       version: Value(version),
       changeSeq: Value(changeSeq),
+      workspace: Value(workspace),
       categoryId: categoryId == null && nullToAbsent
           ? const Value.absent()
           : Value(categoryId),
@@ -2217,6 +2395,7 @@ class Budget extends DataClass implements Insertable<Budget> {
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
       version: serializer.fromJson<int>(json['version']),
       changeSeq: serializer.fromJson<int>(json['changeSeq']),
+      workspace: serializer.fromJson<String>(json['workspace']),
       categoryId: serializer.fromJson<String?>(json['categoryId']),
       name: serializer.fromJson<String>(json['name']),
       amountMinor: serializer.fromJson<int>(json['amountMinor']),
@@ -2236,6 +2415,7 @@ class Budget extends DataClass implements Insertable<Budget> {
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
       'version': serializer.toJson<int>(version),
       'changeSeq': serializer.toJson<int>(changeSeq),
+      'workspace': serializer.toJson<String>(workspace),
       'categoryId': serializer.toJson<String?>(categoryId),
       'name': serializer.toJson<String>(name),
       'amountMinor': serializer.toJson<int>(amountMinor),
@@ -2253,6 +2433,7 @@ class Budget extends DataClass implements Insertable<Budget> {
     Value<DateTime?> deletedAt = const Value.absent(),
     int? version,
     int? changeSeq,
+    String? workspace,
     Value<String?> categoryId = const Value.absent(),
     String? name,
     int? amountMinor,
@@ -2267,6 +2448,7 @@ class Budget extends DataClass implements Insertable<Budget> {
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
     version: version ?? this.version,
     changeSeq: changeSeq ?? this.changeSeq,
+    workspace: workspace ?? this.workspace,
     categoryId: categoryId.present ? categoryId.value : this.categoryId,
     name: name ?? this.name,
     amountMinor: amountMinor ?? this.amountMinor,
@@ -2283,6 +2465,7 @@ class Budget extends DataClass implements Insertable<Budget> {
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
       version: data.version.present ? data.version.value : this.version,
       changeSeq: data.changeSeq.present ? data.changeSeq.value : this.changeSeq,
+      workspace: data.workspace.present ? data.workspace.value : this.workspace,
       categoryId: data.categoryId.present
           ? data.categoryId.value
           : this.categoryId,
@@ -2310,6 +2493,7 @@ class Budget extends DataClass implements Insertable<Budget> {
           ..write('deletedAt: $deletedAt, ')
           ..write('version: $version, ')
           ..write('changeSeq: $changeSeq, ')
+          ..write('workspace: $workspace, ')
           ..write('categoryId: $categoryId, ')
           ..write('name: $name, ')
           ..write('amountMinor: $amountMinor, ')
@@ -2329,6 +2513,7 @@ class Budget extends DataClass implements Insertable<Budget> {
     deletedAt,
     version,
     changeSeq,
+    workspace,
     categoryId,
     name,
     amountMinor,
@@ -2347,6 +2532,7 @@ class Budget extends DataClass implements Insertable<Budget> {
           other.deletedAt == this.deletedAt &&
           other.version == this.version &&
           other.changeSeq == this.changeSeq &&
+          other.workspace == this.workspace &&
           other.categoryId == this.categoryId &&
           other.name == this.name &&
           other.amountMinor == this.amountMinor &&
@@ -2363,6 +2549,7 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
   final Value<DateTime?> deletedAt;
   final Value<int> version;
   final Value<int> changeSeq;
+  final Value<String> workspace;
   final Value<String?> categoryId;
   final Value<String> name;
   final Value<int> amountMinor;
@@ -2378,6 +2565,7 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     this.deletedAt = const Value.absent(),
     this.version = const Value.absent(),
     this.changeSeq = const Value.absent(),
+    this.workspace = const Value.absent(),
     this.categoryId = const Value.absent(),
     this.name = const Value.absent(),
     this.amountMinor = const Value.absent(),
@@ -2394,6 +2582,7 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     this.deletedAt = const Value.absent(),
     this.version = const Value.absent(),
     this.changeSeq = const Value.absent(),
+    this.workspace = const Value.absent(),
     this.categoryId = const Value.absent(),
     required String name,
     required int amountMinor,
@@ -2418,6 +2607,7 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     Expression<DateTime>? deletedAt,
     Expression<int>? version,
     Expression<int>? changeSeq,
+    Expression<String>? workspace,
     Expression<String>? categoryId,
     Expression<String>? name,
     Expression<int>? amountMinor,
@@ -2434,6 +2624,7 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (version != null) 'version': version,
       if (changeSeq != null) 'change_seq': changeSeq,
+      if (workspace != null) 'workspace': workspace,
       if (categoryId != null) 'category_id': categoryId,
       if (name != null) 'name': name,
       if (amountMinor != null) 'amount_minor': amountMinor,
@@ -2452,6 +2643,7 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     Value<DateTime?>? deletedAt,
     Value<int>? version,
     Value<int>? changeSeq,
+    Value<String>? workspace,
     Value<String?>? categoryId,
     Value<String>? name,
     Value<int>? amountMinor,
@@ -2468,6 +2660,7 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
       deletedAt: deletedAt ?? this.deletedAt,
       version: version ?? this.version,
       changeSeq: changeSeq ?? this.changeSeq,
+      workspace: workspace ?? this.workspace,
       categoryId: categoryId ?? this.categoryId,
       name: name ?? this.name,
       amountMinor: amountMinor ?? this.amountMinor,
@@ -2501,6 +2694,9 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     }
     if (changeSeq.present) {
       map['change_seq'] = Variable<int>(changeSeq.value);
+    }
+    if (workspace.present) {
+      map['workspace'] = Variable<String>(workspace.value);
     }
     if (categoryId.present) {
       map['category_id'] = Variable<String>(categoryId.value);
@@ -2536,6 +2732,7 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
           ..write('deletedAt: $deletedAt, ')
           ..write('version: $version, ')
           ..write('changeSeq: $changeSeq, ')
+          ..write('workspace: $workspace, ')
           ..write('categoryId: $categoryId, ')
           ..write('name: $name, ')
           ..write('amountMinor: $amountMinor, ')
@@ -3967,6 +4164,7 @@ typedef $$ProfilesTableCreateCompanionBuilder =
       required String id,
       Value<String> displayName,
       Value<String> currencyCode,
+      Value<bool> freelancerEnabled,
       required DateTime updatedAt,
       Value<int> changeSeq,
       Value<int> rowid,
@@ -3976,6 +4174,7 @@ typedef $$ProfilesTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> displayName,
       Value<String> currencyCode,
+      Value<bool> freelancerEnabled,
       Value<DateTime> updatedAt,
       Value<int> changeSeq,
       Value<int> rowid,
@@ -4002,6 +4201,11 @@ class $$ProfilesTableFilterComposer
 
   ColumnFilters<String> get currencyCode => $composableBuilder(
     column: $table.currencyCode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get freelancerEnabled => $composableBuilder(
+    column: $table.freelancerEnabled,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4040,6 +4244,11 @@ class $$ProfilesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get freelancerEnabled => $composableBuilder(
+    column: $table.freelancerEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -4070,6 +4279,11 @@ class $$ProfilesTableAnnotationComposer
 
   GeneratedColumn<String> get currencyCode => $composableBuilder(
     column: $table.currencyCode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get freelancerEnabled => $composableBuilder(
+    column: $table.freelancerEnabled,
     builder: (column) => column,
   );
 
@@ -4111,6 +4325,7 @@ class $$ProfilesTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> displayName = const Value.absent(),
                 Value<String> currencyCode = const Value.absent(),
+                Value<bool> freelancerEnabled = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> changeSeq = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -4118,6 +4333,7 @@ class $$ProfilesTableTableManager
                 id: id,
                 displayName: displayName,
                 currencyCode: currencyCode,
+                freelancerEnabled: freelancerEnabled,
                 updatedAt: updatedAt,
                 changeSeq: changeSeq,
                 rowid: rowid,
@@ -4127,6 +4343,7 @@ class $$ProfilesTableTableManager
                 required String id,
                 Value<String> displayName = const Value.absent(),
                 Value<String> currencyCode = const Value.absent(),
+                Value<bool> freelancerEnabled = const Value.absent(),
                 required DateTime updatedAt,
                 Value<int> changeSeq = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -4134,6 +4351,7 @@ class $$ProfilesTableTableManager
                 id: id,
                 displayName: displayName,
                 currencyCode: currencyCode,
+                freelancerEnabled: freelancerEnabled,
                 updatedAt: updatedAt,
                 changeSeq: changeSeq,
                 rowid: rowid,
@@ -4178,6 +4396,7 @@ typedef $$CategoriesTableCreateCompanionBuilder =
       Value<DateTime?> deletedAt,
       Value<int> version,
       Value<int> changeSeq,
+      Value<String> workspace,
       required String name,
       required String type,
       Value<String> iconKey,
@@ -4193,6 +4412,7 @@ typedef $$CategoriesTableUpdateCompanionBuilder =
       Value<DateTime?> deletedAt,
       Value<int> version,
       Value<int> changeSeq,
+      Value<String> workspace,
       Value<String> name,
       Value<String> type,
       Value<String> iconKey,
@@ -4241,6 +4461,11 @@ class $$CategoriesTableFilterComposer
 
   ColumnFilters<int> get changeSeq => $composableBuilder(
     column: $table.changeSeq,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get workspace => $composableBuilder(
+    column: $table.workspace,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4309,6 +4534,11 @@ class $$CategoriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get workspace => $composableBuilder(
+    column: $table.workspace,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get name => $composableBuilder(
     column: $table.name,
     builder: (column) => ColumnOrderings(column),
@@ -4360,6 +4590,9 @@ class $$CategoriesTableAnnotationComposer
   GeneratedColumn<int> get changeSeq =>
       $composableBuilder(column: $table.changeSeq, builder: (column) => column);
 
+  GeneratedColumn<String> get workspace =>
+      $composableBuilder(column: $table.workspace, builder: (column) => column);
+
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
 
@@ -4408,6 +4641,7 @@ class $$CategoriesTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> version = const Value.absent(),
                 Value<int> changeSeq = const Value.absent(),
+                Value<String> workspace = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String> type = const Value.absent(),
                 Value<String> iconKey = const Value.absent(),
@@ -4421,6 +4655,7 @@ class $$CategoriesTableTableManager
                 deletedAt: deletedAt,
                 version: version,
                 changeSeq: changeSeq,
+                workspace: workspace,
                 name: name,
                 type: type,
                 iconKey: iconKey,
@@ -4436,6 +4671,7 @@ class $$CategoriesTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> version = const Value.absent(),
                 Value<int> changeSeq = const Value.absent(),
+                Value<String> workspace = const Value.absent(),
                 required String name,
                 required String type,
                 Value<String> iconKey = const Value.absent(),
@@ -4449,6 +4685,7 @@ class $$CategoriesTableTableManager
                 deletedAt: deletedAt,
                 version: version,
                 changeSeq: changeSeq,
+                workspace: workspace,
                 name: name,
                 type: type,
                 iconKey: iconKey,
@@ -4495,6 +4732,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<DateTime?> deletedAt,
       Value<int> version,
       Value<int> changeSeq,
+      Value<String> workspace,
       Value<String?> categoryId,
       required String type,
       required int amountMinor,
@@ -4512,6 +4750,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<DateTime?> deletedAt,
       Value<int> version,
       Value<int> changeSeq,
+      Value<String> workspace,
       Value<String?> categoryId,
       Value<String> type,
       Value<int> amountMinor,
@@ -4562,6 +4801,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<int> get changeSeq => $composableBuilder(
     column: $table.changeSeq,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get workspace => $composableBuilder(
+    column: $table.workspace,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4640,6 +4884,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get workspace => $composableBuilder(
+    column: $table.workspace,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get categoryId => $composableBuilder(
     column: $table.categoryId,
     builder: (column) => ColumnOrderings(column),
@@ -4700,6 +4949,9 @@ class $$TransactionsTableAnnotationComposer
 
   GeneratedColumn<int> get changeSeq =>
       $composableBuilder(column: $table.changeSeq, builder: (column) => column);
+
+  GeneratedColumn<String> get workspace =>
+      $composableBuilder(column: $table.workspace, builder: (column) => column);
 
   GeneratedColumn<String> get categoryId => $composableBuilder(
     column: $table.categoryId,
@@ -4768,6 +5020,7 @@ class $$TransactionsTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> version = const Value.absent(),
                 Value<int> changeSeq = const Value.absent(),
+                Value<String> workspace = const Value.absent(),
                 Value<String?> categoryId = const Value.absent(),
                 Value<String> type = const Value.absent(),
                 Value<int> amountMinor = const Value.absent(),
@@ -4783,6 +5036,7 @@ class $$TransactionsTableTableManager
                 deletedAt: deletedAt,
                 version: version,
                 changeSeq: changeSeq,
+                workspace: workspace,
                 categoryId: categoryId,
                 type: type,
                 amountMinor: amountMinor,
@@ -4800,6 +5054,7 @@ class $$TransactionsTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> version = const Value.absent(),
                 Value<int> changeSeq = const Value.absent(),
+                Value<String> workspace = const Value.absent(),
                 Value<String?> categoryId = const Value.absent(),
                 required String type,
                 required int amountMinor,
@@ -4815,6 +5070,7 @@ class $$TransactionsTableTableManager
                 deletedAt: deletedAt,
                 version: version,
                 changeSeq: changeSeq,
+                workspace: workspace,
                 categoryId: categoryId,
                 type: type,
                 amountMinor: amountMinor,
@@ -4866,6 +5122,7 @@ typedef $$BudgetsTableCreateCompanionBuilder =
       Value<DateTime?> deletedAt,
       Value<int> version,
       Value<int> changeSeq,
+      Value<String> workspace,
       Value<String?> categoryId,
       required String name,
       required int amountMinor,
@@ -4883,6 +5140,7 @@ typedef $$BudgetsTableUpdateCompanionBuilder =
       Value<DateTime?> deletedAt,
       Value<int> version,
       Value<int> changeSeq,
+      Value<String> workspace,
       Value<String?> categoryId,
       Value<String> name,
       Value<int> amountMinor,
@@ -4933,6 +5191,11 @@ class $$BudgetsTableFilterComposer
 
   ColumnFilters<int> get changeSeq => $composableBuilder(
     column: $table.changeSeq,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get workspace => $composableBuilder(
+    column: $table.workspace,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5011,6 +5274,11 @@ class $$BudgetsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get workspace => $composableBuilder(
+    column: $table.workspace,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get categoryId => $composableBuilder(
     column: $table.categoryId,
     builder: (column) => ColumnOrderings(column),
@@ -5071,6 +5339,9 @@ class $$BudgetsTableAnnotationComposer
 
   GeneratedColumn<int> get changeSeq =>
       $composableBuilder(column: $table.changeSeq, builder: (column) => column);
+
+  GeneratedColumn<String> get workspace =>
+      $composableBuilder(column: $table.workspace, builder: (column) => column);
 
   GeneratedColumn<String> get categoryId => $composableBuilder(
     column: $table.categoryId,
@@ -5134,6 +5405,7 @@ class $$BudgetsTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> version = const Value.absent(),
                 Value<int> changeSeq = const Value.absent(),
+                Value<String> workspace = const Value.absent(),
                 Value<String?> categoryId = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<int> amountMinor = const Value.absent(),
@@ -5149,6 +5421,7 @@ class $$BudgetsTableTableManager
                 deletedAt: deletedAt,
                 version: version,
                 changeSeq: changeSeq,
+                workspace: workspace,
                 categoryId: categoryId,
                 name: name,
                 amountMinor: amountMinor,
@@ -5166,6 +5439,7 @@ class $$BudgetsTableTableManager
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> version = const Value.absent(),
                 Value<int> changeSeq = const Value.absent(),
+                Value<String> workspace = const Value.absent(),
                 Value<String?> categoryId = const Value.absent(),
                 required String name,
                 required int amountMinor,
@@ -5181,6 +5455,7 @@ class $$BudgetsTableTableManager
                 deletedAt: deletedAt,
                 version: version,
                 changeSeq: changeSeq,
+                workspace: workspace,
                 categoryId: categoryId,
                 name: name,
                 amountMinor: amountMinor,

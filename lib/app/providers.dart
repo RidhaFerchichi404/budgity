@@ -24,16 +24,34 @@ final databaseProvider = Provider<AppDatabase>((ref) {
   return db;
 });
 
+final selectedWorkspaceProvider = NotifierProvider<SelectedWorkspace, String>(SelectedWorkspace.new);
+
+class SelectedWorkspace extends Notifier<String> {
+  @override
+  String build() => 'personal';
+
+  void select(String workspace) => state = workspace;
+}
+
+/// The workspace every screen shows: Personal unless Freelancer is enabled and chosen.
+/// Repositories watch it, so switching rebuilds every stream.
+final workspaceProvider = Provider<String>((ref) {
+  final enabled = ref.watch(profileProvider).value?.freelancerEnabled ?? false;
+  return enabled ? ref.watch(selectedWorkspaceProvider) : 'personal';
+});
+
 final transactionRepositoryProvider = Provider<TransactionRepository>(
-  (ref) => DriftTransactionRepository(ref.watch(databaseProvider), () => _uid(ref)),
+  (ref) =>
+      DriftTransactionRepository(ref.watch(databaseProvider), () => _uid(ref), workspace: ref.watch(workspaceProvider)),
 );
 
 final categoryRepositoryProvider = Provider<CategoryRepository>(
-  (ref) => DriftCategoryRepository(ref.watch(databaseProvider), () => _uid(ref)),
+  (ref) =>
+      DriftCategoryRepository(ref.watch(databaseProvider), () => _uid(ref), workspace: ref.watch(workspaceProvider)),
 );
 
 final budgetRepositoryProvider = Provider<BudgetRepository>(
-  (ref) => DriftBudgetRepository(ref.watch(databaseProvider), () => _uid(ref)),
+  (ref) => DriftBudgetRepository(ref.watch(databaseProvider), () => _uid(ref), workspace: ref.watch(workspaceProvider)),
 );
 
 final profileRepositoryProvider = Provider<ProfileRepository>(

@@ -24,6 +24,7 @@ class _RecordingRepo implements TransactionRepository {
     return TransactionRow(
       id: 'x',
       userId: 'u',
+      workspace: 'personal',
       type: type,
       amountMinor: amountMinor,
       currencyCode: currencyCode,

@@ -285,6 +285,41 @@ void main() {
     expect((await a.queue()).single.status, OpStatus.pending);
   });
 
+  test('keep server on a conflict stored by v1.0.0 (no workspace in server row)', () async {
+    final t = await expense(a, 100);
+    await a.engine.run();
+    await b.engine.run();
+    a.remote.online = false;
+    await a.tx.updateTransaction(t.copyWith(amountMinor: 111));
+    await b.tx.updateTransaction((await b.visible()).single.copyWith(amountMinor: 222));
+    a.remote.online = true;
+    a.later();
+    b.later();
+    await a.engine.run();
+    await b.engine.run();
+    await b.db.customStatement(r"UPDATE sync_conflicts SET server_row = json_remove(server_row, '$.workspace')");
+
+    await b.db.syncDao.keepServer((await b.db.syncDao.watchConflicts().first).single);
+    final row = (await b.visible()).single;
+    expect(row.amountMinor, 111);
+    expect(row.workspace, 'personal');
+  });
+
+  test('op queued by v1.0.0 (no workspace in payload) syncs as personal', () async {
+    a.remote.online = false;
+    final t = await expense(a, 700);
+    await a.db.customStatement(r"UPDATE sync_queue SET payload = json_remove(payload, '$.workspace')");
+
+    a.remote.online = true;
+    a.later();
+    await a.engine.run();
+    await b.engine.run();
+
+    expect(server.tables['transactions']![t.id]!['workspace'], 'personal');
+    expect((await b.visible()).single.workspace, 'personal');
+    expect(await a.queue(), isEmpty);
+  });
+
   test('validation rejects bad input before anything is stored', () async {
     expect(() => expense(a, 0), throwsA(isA<ValidationException>()));
     expect(

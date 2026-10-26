@@ -130,5 +130,28 @@ void main() async {
       final rows = await a.client.from('transactions').select().eq('id', t.id);
       expect(rows, hasLength(1));
     });
+
+    test('update_profile over HTTP: v1.0.0 args, null flag, then enabling seeds Freelancer', () async {
+      Future<Map<String, dynamic>> call(Map<String, dynamic> params) async =>
+          await a.client.rpc('update_profile', params: params) as Map<String, dynamic>;
+      Future<int> freelanceCats() async =>
+          (await a.client.from('categories').select('id').eq('workspace', 'freelancer')).length;
+
+      final v1 = await call({'p_display_name': 'V1', 'p_currency_code': 'TND'});
+      expect(v1['freelancer_enabled'], false);
+
+      final api = SupabaseSyncApi(a.client);
+      final kept = await api.updateProfile({'display_name': 'V2', 'currency_code': 'TND'});
+      expect([kept['display_name'], kept['freelancer_enabled']], ['V2', false]);
+      expect(await freelanceCats(), 0);
+
+      final on = await api.updateProfile({'display_name': 'V2', 'currency_code': 'TND', 'freelancer_enabled': true});
+      expect(on['freelancer_enabled'], true);
+      expect(await freelanceCats(), 7);
+
+      final stillOn = await call({'p_display_name': 'V3', 'p_currency_code': 'TND'});
+      expect(stillOn['freelancer_enabled'], true);
+      expect(await freelanceCats(), 7);
+    });
   });
 }

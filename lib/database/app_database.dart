@@ -5,6 +5,7 @@ import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import 'app_database.steps.dart';
 import 'daos/sync_dao.dart';
 import 'server_rows.dart';
 import 'tables.dart';
@@ -43,7 +44,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -52,7 +53,16 @@ class AppDatabase extends _$AppDatabase {
       await customStatement('CREATE INDEX tx_date_idx ON transactions (transaction_date)');
       await customStatement('CREATE INDEX queue_entity_idx ON sync_queue (entity_type, entity_id)');
     },
-    // Future versions: add `from1To2` etc. via `drift_dev make-migrations`.
+    // New steps: bump schemaVersion, then `dart run drift_dev make-migrations`.
+    onUpgrade: stepByStep(
+      // Every v1 row is personal, which is the column default (ADR 0006). No queue ops.
+      from1To2: (m, schema) async {
+        await m.addColumn(schema.categories, schema.categories.workspace);
+        await m.addColumn(schema.transactions, schema.transactions.workspace);
+        await m.addColumn(schema.budgets, schema.budgets.workspace);
+        await m.addColumn(schema.profiles, schema.profiles.freelancerEnabled);
+      },
+    ),
   );
 
   TableInfo<Table, dynamic>? _synced(EntityType type) => switch (type) {

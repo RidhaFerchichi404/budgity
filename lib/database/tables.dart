@@ -17,10 +17,16 @@ mixin SyncedColumns on Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// 'personal' or 'freelancer' (ADR 0006). Set on create, never changed.
+mixin WorkspaceColumn on Table {
+  TextColumn get workspace => text().withDefault(const Constant('personal'))();
+}
+
 class Profiles extends Table {
   TextColumn get id => text()();
   TextColumn get displayName => text().withDefault(const Constant(''))();
   TextColumn get currencyCode => text().withDefault(const Constant('TND'))();
+  BoolColumn get freelancerEnabled => boolean().withDefault(const Constant(false))();
   DateTimeColumn get updatedAt => dateTime()();
   IntColumn get changeSeq => integer().withDefault(const Constant(0))();
 
@@ -28,7 +34,7 @@ class Profiles extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-class Categories extends Table with SyncedColumns {
+class Categories extends Table with SyncedColumns, WorkspaceColumn {
   TextColumn get name => text().withLength(min: 1, max: 50)();
   TextColumn get type => text()();
   TextColumn get iconKey => text().withDefault(const Constant('tag'))();
@@ -36,7 +42,7 @@ class Categories extends Table with SyncedColumns {
 }
 
 @DataClassName('TransactionRow')
-class Transactions extends Table with SyncedColumns {
+class Transactions extends Table with SyncedColumns, WorkspaceColumn {
   TextColumn get categoryId => text().nullable()();
   TextColumn get type => text()();
   IntColumn get amountMinor => integer()();
@@ -45,7 +51,7 @@ class Transactions extends Table with SyncedColumns {
   TextColumn get transactionDate => text()();
 }
 
-class Budgets extends Table with SyncedColumns {
+class Budgets extends Table with SyncedColumns, WorkspaceColumn {
   TextColumn get categoryId => text().nullable()();
   TextColumn get name => text().withLength(min: 1, max: 50)();
   IntColumn get amountMinor => integer()();

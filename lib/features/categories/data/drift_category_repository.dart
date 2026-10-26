@@ -7,16 +7,18 @@ import '../../../core/errors/validation_exception.dart';
 import '../domain/category_repository.dart';
 
 class DriftCategoryRepository implements CategoryRepository {
-  DriftCategoryRepository(this._db, this._userId);
+  /// Reads and creates are scoped to [workspace] (ADR 0006).
+  DriftCategoryRepository(this._db, this._userId, {this.workspace = 'personal'});
 
   final AppDatabase _db;
   final String Function() _userId;
+  final String workspace;
 
   static const _uuid = Uuid();
 
   @override
   Stream<List<Category>> watchCategories({String? type, bool includeArchived = false}) {
-    final q = _db.select(_db.categories);
+    final q = _db.select(_db.categories)..where((c) => c.workspace.equals(workspace));
     if (!includeArchived) q.where((c) => c.deletedAt.isNull());
     if (type != null) q.where((c) => c.type.equals(type));
     q.orderBy([(c) => OrderingTerm.asc(c.type), (c) => OrderingTerm.asc(c.sortOrder), (c) => OrderingTerm.asc(c.name)]);
@@ -29,6 +31,7 @@ class DriftCategoryRepository implements CategoryRepository {
     final row = Category(
       id: _uuid.v4(),
       userId: _userId(),
+      workspace: workspace,
       name: name.trim(),
       type: type,
       iconKey: iconKey,

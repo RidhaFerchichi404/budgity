@@ -25,6 +25,7 @@ final _now = DateTime(2026, 10, 26);
 Category _cat(String id, String name, String type, String icon) => Category(
   id: id,
   userId: 'u',
+  workspace: 'personal',
   name: name,
   type: type,
   iconKey: icon,
@@ -38,6 +39,7 @@ Category _cat(String id, String name, String type, String icon) => Category(
 TransactionRow _tx(String id, String type, int minor, String date, String cat, String desc) => TransactionRow(
   id: id,
   userId: 'u',
+  workspace: 'personal',
   categoryId: cat,
   type: type,
   amountMinor: minor,
@@ -72,6 +74,7 @@ final _txs = [
 Budget _budget(String id, String name, int limit, String? cat) => Budget(
   id: id,
   userId: 'u',
+  workspace: 'personal',
   categoryId: cat,
   name: name,
   amountMinor: limit,
@@ -139,6 +142,7 @@ Widget _frame(String title, Widget body, {Widget? fab}) => ProviderScope(
     budgetRepositoryProvider.overrideWithValue(_Budgets()),
     categoriesByIdProvider.overrideWith((ref) => Stream.value(_cats)),
     currencyProvider.overrideWithValue('TND'),
+    workspaceProvider.overrideWithValue('personal'),
   ],
   child: MaterialApp(
     debugShowCheckedModeBanner: false,
