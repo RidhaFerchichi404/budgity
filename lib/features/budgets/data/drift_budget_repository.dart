@@ -51,6 +51,7 @@ class DriftBudgetRepository implements BudgetRepository {
     final row = Budget(
       id: _uuid.v4(),
       userId: _userId(),
+      workspace: 'personal',
       categoryId: categoryId,
       name: name.trim(),
       amountMinor: amountMinor,

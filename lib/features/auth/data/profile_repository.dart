@@ -18,17 +18,20 @@ class ProfileRepository {
   Stream<Profile?> watchProfile() =>
       (_db.select(_db.profiles)..where((p) => p.id.equals(_userId()))).watchSingleOrNull();
 
-  Future<void> update({required String displayName, required String currencyCode}) async {
+  /// [freelancerEnabled] null keeps the current value (the payload always carries one).
+  Future<void> update({required String displayName, required String currencyCode, bool? freelancerEnabled}) async {
     if (displayName.trim().length > 100) throw const ValidationException('Name is too long');
     if (!Money.supportedCurrencies.contains(currencyCode)) throw const ValidationException('Unsupported currency');
-    final row = Profile(
-      id: _userId(),
-      displayName: displayName.trim(),
-      currencyCode: currencyCode,
-      updatedAt: DateTime.now().toUtc(),
-      changeSeq: 0,
-    );
     await _db.transaction(() async {
+      final current = await watchProfile().first;
+      final row = Profile(
+        id: _userId(),
+        displayName: displayName.trim(),
+        currencyCode: currencyCode,
+        freelancerEnabled: freelancerEnabled ?? current?.freelancerEnabled ?? false,
+        updatedAt: DateTime.now().toUtc(),
+        changeSeq: 0,
+      );
       await _db
           .into(_db.profiles)
           .insert(
@@ -37,6 +40,7 @@ class ProfileRepository {
               (_) => ProfilesCompanion(
                 displayName: Value(row.displayName),
                 currencyCode: Value(row.currencyCode),
+                freelancerEnabled: Value(row.freelancerEnabled),
                 updatedAt: Value(row.updatedAt),
               ),
             ),

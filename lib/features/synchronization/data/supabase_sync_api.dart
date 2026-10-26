@@ -26,7 +26,11 @@ class SupabaseSyncApi implements RemoteSyncApi {
   Future<Json> updateProfile(Json payload) => _guard(() async {
     final res = await _client.rpc(
       'update_profile',
-      params: {'p_display_name': payload['display_name'], 'p_currency_code': payload['currency_code']},
+      params: {
+        'p_display_name': payload['display_name'],
+        'p_currency_code': payload['currency_code'],
+        'p_freelancer_enabled': payload['freelancer_enabled'],
+      },
     );
     return res as Json;
   });

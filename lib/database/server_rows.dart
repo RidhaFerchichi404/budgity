@@ -27,6 +27,7 @@ DateTime? _tsOrNull(Object? v) => v == null ? null : DateTime.parse(v as String)
 /// change_seq and updated_at.
 abstract final class ServerRows {
   static Json categoryPayload(Category c) => {
+    'workspace': c.workspace,
     'name': c.name,
     'type': c.type,
     'icon_key': c.iconKey,
@@ -35,6 +36,7 @@ abstract final class ServerRows {
   };
 
   static Json transactionPayload(TransactionRow t) => {
+    'workspace': t.workspace,
     'category_id': t.categoryId,
     'type': t.type,
     'amount_minor': t.amountMinor,
@@ -45,6 +47,7 @@ abstract final class ServerRows {
   };
 
   static Json budgetPayload(Budget b) => {
+    'workspace': b.workspace,
     'category_id': b.categoryId,
     'name': b.name,
     'amount_minor': b.amountMinor,
@@ -54,7 +57,11 @@ abstract final class ServerRows {
     'created_at': b.createdAt.toUtc().toIso8601String(),
   };
 
-  static Json profilePayload(Profile p) => {'display_name': p.displayName, 'currency_code': p.currencyCode};
+  static Json profilePayload(Profile p) => {
+    'display_name': p.displayName,
+    'currency_code': p.currencyCode,
+    'freelancer_enabled': p.freelancerEnabled,
+  };
 
   /// Inserts or replaces the local row with the server's version of it.
   static Future<void> upsert(AppDatabase db, EntityType type, Json r) {
@@ -67,6 +74,7 @@ abstract final class ServerRows {
                 id: r['id'] as String,
                 displayName: Value(r['display_name'] as String),
                 currencyCode: Value(r['currency_code'] as String),
+                freelancerEnabled: Value(r['freelancer_enabled'] as bool),
                 updatedAt: _ts(r['updated_at']),
                 changeSeq: Value(r['change_seq'] as int),
               ),
@@ -78,6 +86,7 @@ abstract final class ServerRows {
               CategoriesCompanion.insert(
                 id: r['id'] as String,
                 userId: r['user_id'] as String,
+                workspace: Value(r['workspace'] as String),
                 name: r['name'] as String,
                 type: r['type'] as String,
                 iconKey: Value(r['icon_key'] as String),
@@ -96,6 +105,7 @@ abstract final class ServerRows {
               TransactionsCompanion.insert(
                 id: r['id'] as String,
                 userId: r['user_id'] as String,
+                workspace: Value(r['workspace'] as String),
                 categoryId: Value(r['category_id'] as String?),
                 type: r['type'] as String,
                 amountMinor: r['amount_minor'] as int,
@@ -116,6 +126,7 @@ abstract final class ServerRows {
               BudgetsCompanion.insert(
                 id: r['id'] as String,
                 userId: r['user_id'] as String,
+                workspace: Value(r['workspace'] as String),
                 categoryId: Value(r['category_id'] as String?),
                 name: r['name'] as String,
                 amountMinor: r['amount_minor'] as int,

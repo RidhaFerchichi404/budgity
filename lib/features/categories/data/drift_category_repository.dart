@@ -29,6 +29,7 @@ class DriftCategoryRepository implements CategoryRepository {
     final row = Category(
       id: _uuid.v4(),
       userId: _userId(),
+      workspace: 'personal',
       name: name.trim(),
       type: type,
       iconKey: iconKey,

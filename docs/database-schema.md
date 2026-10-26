@@ -11,15 +11,16 @@ All synced tables have `id uuid` (generated on the client), `user_id`, `created_
 
 | Table | Fields |
 |---|---|
-| `profiles` | `id` (= auth user id), `display_name`, `currency_code`, `created_at`, `updated_at`, `change_seq` |
-| `categories` | `name`, `type` (`income`/`expense`), `icon_key`, `sort_order` |
-| `transactions` | `category_id?`, `type`, `amount_minor > 0`, `currency_code`, `description`, `transaction_date` |
-| `budgets` | `category_id?`, `name`, `amount_minor > 0`, `currency_code`, `period_start`, `period_end >= period_start` |
+| `profiles` | `id` (= auth user id), `display_name`, `currency_code`, `freelancer_enabled`, `created_at`, `updated_at`, `change_seq` |
+| `categories` | `workspace`, `name`, `type` (`income`/`expense`), `icon_key`, `sort_order` |
+| `transactions` | `workspace`, `category_id?`, `type`, `amount_minor > 0`, `currency_code`, `description`, `transaction_date` |
+| `budgets` | `workspace`, `category_id?`, `name`, `amount_minor > 0`, `currency_code`, `period_start`, `period_end >= period_start` |
 
 ### Constraints
 
 - `type in ('income','expense')`. `currency_code` is 3 uppercase letters.
-- Composite FK `(category_id, user_id) → categories(id, user_id)`, so a row can only reference its owner's category.
+- `workspace in ('personal','freelancer')`, default `personal`, immutable after create (ADR 0006).
+- Composite FK `(category_id, user_id, workspace) → categories(id, user_id, workspace)`, so a row can only reference its owner's category in the same workspace.
 - Categories are never hard-deleted (soft delete only), so history keeps its category.
 - Indexes: `(user_id, change_seq)` on every synced table, `(user_id, transaction_date)` on transactions.
 
