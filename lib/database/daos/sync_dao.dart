@@ -44,7 +44,8 @@ class SyncDao extends DatabaseAccessor<AppDatabase> with _$SyncDaoMixin {
       await (update(syncQueue)..where((q) => q.id.equals(last.id))).write(
         SyncQueueCompanion(
           operation: Value(last.operation == 'create' ? 'create' : operation),
-          payload: Value(jsonEncode(payload)),
+          // merged: an unsent profile op may carry a field the newer one omits
+          payload: Value(jsonEncode({...jsonDecode(last.payload) as Json, ...payload})),
         ),
       );
       return;

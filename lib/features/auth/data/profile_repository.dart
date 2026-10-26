@@ -18,7 +18,7 @@ class ProfileRepository {
   Stream<Profile?> watchProfile() =>
       (_db.select(_db.profiles)..where((p) => p.id.equals(_userId()))).watchSingleOrNull();
 
-  /// [freelancerEnabled] null keeps the current value (the payload always carries one).
+  /// [freelancerEnabled] null keeps the current value and leaves it out of the payload.
   Future<void> update({required String displayName, required String currencyCode, bool? freelancerEnabled}) async {
     if (displayName.trim().length > 100) throw const ValidationException('Name is too long');
     if (!Money.supportedCurrencies.contains(currencyCode)) throw const ValidationException('Unsupported currency');
@@ -45,7 +45,12 @@ class ProfileRepository {
               ),
             ),
           );
-      await _db.syncDao.enqueue(EntityType.profile, row.id, 'update', ServerRows.profilePayload(row));
+      await _db.syncDao.enqueue(
+        EntityType.profile,
+        row.id,
+        'update',
+        ServerRows.profilePayload(row, sendFreelancer: freelancerEnabled != null),
+      );
     });
   }
 }

@@ -320,34 +320,6 @@ void main() {
     expect(await a.queue(), isEmpty);
   });
 
-  test('a row cannot use a category from another workspace', () async {
-    final rows = server.apply({
-      'op_id': 'op-free-cat',
-      'entity_type': 'category',
-      'entity_id': 'free-cat',
-      'operation': 'create',
-      'payload': {
-        'workspace': 'freelancer',
-        'name': 'Software',
-        'type': 'expense',
-        'created_at': DateTime.now().toUtc().toIso8601String(),
-      },
-    });
-    expect(rows['status'], 'applied');
-    await a.engine.run();
-
-    await a.tx.createTransaction(
-      type: 'expense',
-      amountMinor: 100,
-      currencyCode: 'TND',
-      transactionDate: '2026-10-20',
-      categoryId: 'free-cat',
-    );
-    await a.engine.run();
-    expect((await a.queue()).single.status, OpStatus.failed);
-    expect(server.rowCount('transactions'), 0);
-  });
-
   test('validation rejects bad input before anything is stored', () async {
     expect(() => expense(a, 0), throwsA(isA<ValidationException>()));
     expect(

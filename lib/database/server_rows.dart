@@ -57,10 +57,12 @@ abstract final class ServerRows {
     'created_at': b.createdAt.toUtc().toIso8601String(),
   };
 
-  static Json profilePayload(Profile p) => {
+  /// The flag is sent only when the user toggled it: a device that hasn't pulled
+  /// yet must not switch Freelancer off by saving its name.
+  static Json profilePayload(Profile p, {bool sendFreelancer = false}) => {
     'display_name': p.displayName,
     'currency_code': p.currencyCode,
-    'freelancer_enabled': p.freelancerEnabled,
+    if (sendFreelancer) 'freelancer_enabled': p.freelancerEnabled,
   };
 
   /// Inserts or replaces the local row with the server's version of it.

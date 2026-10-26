@@ -6,17 +6,19 @@ import '../../../database/server_rows.dart';
 import '../domain/transaction_repository.dart';
 
 class DriftTransactionRepository implements TransactionRepository {
-  DriftTransactionRepository(this._db, this._userId);
+  /// Reads and creates are scoped to [workspace] (ADR 0006).
+  DriftTransactionRepository(this._db, this._userId, {this.workspace = 'personal'});
 
   final AppDatabase _db;
   final String Function() _userId;
+  final String workspace;
 
   static const _uuid = Uuid();
   static final _date = RegExp(r'^\d{4}-\d{2}-\d{2}$');
 
   @override
   Stream<List<TransactionRow>> watchTransactions(TransactionFilter f) {
-    final q = _db.select(_db.transactions)..where((t) => t.deletedAt.isNull());
+    final q = _db.select(_db.transactions)..where((t) => t.deletedAt.isNull() & t.workspace.equals(workspace));
     if (f.from != null) q.where((t) => t.transactionDate.isBiggerOrEqualValue(f.from!));
     if (f.to != null) q.where((t) => t.transactionDate.isSmallerOrEqualValue(f.to!));
     if (f.categoryId != null) q.where((t) => t.categoryId.equals(f.categoryId!));
@@ -46,7 +48,7 @@ class DriftTransactionRepository implements TransactionRepository {
     final row = TransactionRow(
       id: _uuid.v4(),
       userId: _userId(),
-      workspace: 'personal',
+      workspace: workspace,
       categoryId: categoryId,
       type: type,
       amountMinor: amountMinor,
@@ -99,8 +101,8 @@ class DriftTransactionRepository implements TransactionRepository {
 
   @override
   Stream<MoneySummary> watchSummary({String? from, String? to}) {
-    final where = StringBuffer('deleted_at IS NULL');
-    final vars = <Variable>[];
+    final where = StringBuffer('deleted_at IS NULL AND workspace = ?');
+    final vars = <Variable>[Variable.withString(workspace)];
     if (from != null) {
       where.write(' AND transaction_date >= ?');
       vars.add(Variable.withString(from));
@@ -139,6 +141,7 @@ class DriftTransactionRepository implements TransactionRepository {
     if (t.categoryId != null) {
       final cat = await (_db.select(_db.categories)..where((c) => c.id.equals(t.categoryId!))).getSingleOrNull();
       if (cat == null) throw const ValidationException('Unknown category');
+      if (cat.workspace != t.workspace) throw const ValidationException('Category belongs to another workspace');
       if (cat.type != t.type) throw const ValidationException('Category type does not match');
       if (isNew && cat.deletedAt != null) throw const ValidationException('Category is archived');
     }

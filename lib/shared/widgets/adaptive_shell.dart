@@ -63,7 +63,11 @@ class AdaptiveShell extends ConsumerWidget {
         leading: wide ? const Center(child: BudgityMark(size: 32)) : null,
         leadingWidth: wide ? 80 : null,
         title: Text(_dests[_index].label),
-        actions: const [SyncStatusChip(), SizedBox(width: 8)],
+        actions: [
+          if (ref.watch(profileProvider).value?.freelancerEnabled ?? false) const _WorkspaceMenu(),
+          const SyncStatusChip(),
+          const SizedBox(width: 8),
+        ],
       ),
       body: wide
           ? Row(
@@ -111,6 +115,42 @@ class AdaptiveShell extends ConsumerWidget {
                   NavigationDestination(icon: Icon(d.icon), selectedIcon: Icon(d.selectedIcon), label: d.label),
               ],
             ),
+    );
+  }
+}
+
+/// Switches every screen between the Personal and Freelancer workspaces.
+class _WorkspaceMenu extends ConsumerWidget {
+  const _WorkspaceMenu();
+
+  static const _labels = {'personal': 'Personal', 'freelancer': 'Freelancer'};
+  static const _icons = {'personal': Icons.person_outline, 'freelancer': Icons.work_outline};
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current = ref.watch(workspaceProvider);
+    return PopupMenuButton<String>(
+      tooltip: 'Switch workspace',
+      initialValue: current,
+      onSelected: ref.read(selectedWorkspaceProvider.notifier).select,
+      itemBuilder: (_) => [
+        for (final w in _labels.keys)
+          PopupMenuItem(
+            value: w,
+            child: ListTile(leading: Icon(_icons[w]), title: Text(_labels[w]!), contentPadding: EdgeInsets.zero),
+          ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(_icons[current], size: 20),
+            if (isWide(context)) ...[const SizedBox(width: 6), Text(_labels[current]!)],
+            const Icon(Icons.arrow_drop_down),
+          ],
+        ),
+      ),
     );
   }
 }

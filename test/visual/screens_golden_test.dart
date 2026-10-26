@@ -142,6 +142,7 @@ Widget _frame(String title, Widget body, {Widget? fab}) => ProviderScope(
     budgetRepositoryProvider.overrideWithValue(_Budgets()),
     categoriesByIdProvider.overrideWith((ref) => Stream.value(_cats)),
     currencyProvider.overrideWithValue('TND'),
+    workspaceProvider.overrideWithValue('personal'),
   ],
   child: MaterialApp(
     debugShowCheckedModeBanner: false,
