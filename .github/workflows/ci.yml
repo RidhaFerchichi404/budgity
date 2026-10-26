@@ -13,6 +13,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.47.8
           cache: true
       - uses: supabase/setup-cli@v1
         with:
@@ -23,7 +24,8 @@ jobs:
         run: |
           dart run build_runner build --delete-conflicting-outputs
           git diff --exit-code -- '*.g.dart'
-      - run: dart format --output=none --set-exit-if-changed lib test
+      - name: Format (generated *.g.dart excluded; build_runner owns their layout)
+        run: dart format --output=none --set-exit-if-changed $(git ls-files 'lib/*.dart' 'test/*.dart' 'integration_test/*.dart' | grep -v '.g.dart$')
       - run: flutter analyze
 
       - name: Start local Supabase
@@ -42,11 +44,12 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.47.8
           cache: true
       - run: flutter build windows --release --dart-define-from-file=env.example.json
       - uses: actions/upload-artifact@v4
         with:
-          name: mybudget-windows
+          name: budgity-windows
           path: build/windows/x64/runner/Release
 
   build-android:
@@ -61,9 +64,10 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.47.8
           cache: true
       - run: flutter build apk --release --dart-define-from-file=env.example.json
       - uses: actions/upload-artifact@v4
         with:
-          name: mybudget-android
+          name: budgity-android
           path: build/app/outputs/flutter-apk/app-release.apk
