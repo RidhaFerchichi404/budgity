@@ -41,6 +41,7 @@ class BudgetsScreen extends ConsumerWidget {
                     progress: b,
                     categoryName: cats[b.budget.categoryId]?.name,
                     onTap: () => _showBudgetDialog(context, ref, existing: b.budget),
+                    today: ref.watch(todayProvider),
                   ),
               ],
             ),
@@ -48,12 +49,43 @@ class BudgetsScreen extends ConsumerWidget {
   }
 }
 
+/// "12 days left · on pace for 4 650.000 TND", flagged in words when the pace overshoots.
+class _PaceLine extends StatelessWidget {
+  const _PaceLine({required this.daysLeft, required this.projected, required this.overLimit});
+
+  final int daysLeft;
+  final Money projected;
+  final bool overLimit;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = overLimit ? context.finance.warning : theme.colorScheme.onSurfaceVariant;
+    return Row(
+      children: [
+        Icon(overLimit ? Icons.trending_up : Icons.schedule, size: 14, color: color),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            '${daysLeft == 1 ? 'Last day' : '$daysLeft days left'} · '
+            '${overLimit ? 'on pace to go over, ' : 'on pace for '}${projected.format()}',
+            style: theme.textTheme.bodySmall?.copyWith(color: color),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class BudgetProgressTile extends StatelessWidget {
-  const BudgetProgressTile({super.key, required this.progress, this.categoryName, this.onTap});
+  const BudgetProgressTile({super.key, required this.progress, this.categoryName, this.onTap, this.today});
 
   final BudgetProgress progress;
   final String? categoryName;
   final VoidCallback? onTap;
+
+  /// When set and inside the period, adds days left and the projected spend at this pace.
+  final DateTime? today;
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +98,12 @@ class BudgetProgressTile extends StatelessWidget {
         : progress.ratio >= 0.8
         ? (finance.warning, 'Close to limit')
         : (theme.colorScheme.primary, 'On track');
+    final left = today == null ? null : progress.daysLeft(today!);
+    final projected = today == null ? null : progress.projectedMinor(today!);
+    // Only worth saying while the period runs and the limit isn't already passed.
+    final pace = left == null || projected == null || progress.isOver
+        ? null
+        : _PaceLine(daysLeft: left, projected: Money(projected, b.currencyCode), overLimit: projected > b.amountMinor);
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -116,6 +154,7 @@ class BudgetProgressTile extends StatelessWidget {
                   ),
                 ],
               ),
+              if (pace != null) ...[const SizedBox(height: 6), pace],
             ],
           ),
         ),

@@ -13,6 +13,26 @@ class BudgetProgress {
   int get remainingMinor => budget.amountMinor - spentMinor;
   bool get isOver => spentMinor > budget.amountMinor;
   double get ratio => budget.amountMinor == 0 ? 0 : spentMinor / budget.amountMinor;
+
+  /// Days left including [today], or null when [today] is outside the period.
+  int? daysLeft(DateTime today) {
+    final d = _day(today);
+    final start = _date(budget.periodStart), end = _date(budget.periodEnd);
+    if (d.isBefore(start) || d.isAfter(end)) return null;
+    return end.difference(d).inDays + 1;
+  }
+
+  /// Spend at the period's end if the current daily pace holds; null outside the period.
+  int? projectedMinor(DateTime today) {
+    final left = daysLeft(today);
+    if (left == null) return null;
+    final total = _date(budget.periodEnd).difference(_date(budget.periodStart)).inDays + 1;
+    return (spentMinor * total / (total - left + 1)).round();
+  }
+
+  // UTC midnights, so a DST change can't make a day 23 hours long
+  static DateTime _day(DateTime t) => DateTime.utc(t.year, t.month, t.day);
+  static DateTime _date(String iso) => DateTime.parse('${iso}T00:00:00Z');
 }
 
 abstract interface class BudgetRepository {

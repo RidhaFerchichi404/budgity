@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../database/app_database.dart';
+import '../features/analytics/data/drift_analytics_repository.dart';
+import '../features/analytics/domain/analytics_repository.dart';
 import '../features/auth/data/profile_repository.dart';
 import '../features/budgets/data/drift_budget_repository.dart';
 import '../features/budgets/domain/budget_repository.dart';
@@ -53,6 +55,13 @@ final categoryRepositoryProvider = Provider<CategoryRepository>(
 final budgetRepositoryProvider = Provider<BudgetRepository>(
   (ref) => DriftBudgetRepository(ref.watch(databaseProvider), () => _uid(ref), workspace: ref.watch(workspaceProvider)),
 );
+
+final analyticsRepositoryProvider = Provider<AnalyticsRepository>(
+  (ref) => DriftAnalyticsRepository(ref.watch(databaseProvider), workspace: ref.watch(workspaceProvider)),
+);
+
+/// Overridable so date-dependent screens (budget pace, this month) render deterministically in tests.
+final todayProvider = Provider<DateTime>((ref) => DateTime.now());
 
 final profileRepositoryProvider = Provider<ProfileRepository>(
   (ref) => ProfileRepository(ref.watch(databaseProvider), () => _uid(ref)),

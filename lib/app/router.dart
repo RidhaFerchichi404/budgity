@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/analytics/presentation/analytics_screen.dart';
 import '../features/auth/presentation/sign_in_screen.dart';
 import '../features/budgets/presentation/budgets_screen.dart';
 import '../features/categories/presentation/categories_screen.dart';
@@ -53,6 +54,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, s) => TransactionFormScreen(transactionId: s.pathParameters['id']),
       ),
       GoRoute(path: '/sync', builder: (_, _) => const SyncScreen()),
+      GoRoute(path: '/analytics', builder: (_, _) => const AnalyticsScreen()),
       ShellRoute(
         builder: (_, state, child) => AdaptiveShell(location: state.matchedLocation, child: child),
         routes: [
