@@ -13,7 +13,8 @@ mixin _$SyncDaoMixin on DatabaseAccessor<AppDatabase> {
 class SyncDaoManager {
   final _$SyncDaoMixin _db;
   SyncDaoManager(this._db);
-  $$SyncQueueTableTableManager get syncQueue => $$SyncQueueTableTableManager(_db.attachedDatabase, _db.syncQueue);
+  $$SyncQueueTableTableManager get syncQueue =>
+      $$SyncQueueTableTableManager(_db.attachedDatabase, _db.syncQueue);
   $$SyncMetadataTableTableManager get syncMetadata =>
       $$SyncMetadataTableTableManager(_db.attachedDatabase, _db.syncMetadata);
   $$SyncConflictsTableTableManager get syncConflicts =>

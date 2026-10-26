@@ -64,6 +64,7 @@ abstract final class ServerRows {
   };
 
   /// Inserts or replaces the local row with the server's version of it.
+  /// Rows stored before schema v2 (conflicts, ledger replays) lack workspace and are personal.
   static Future<void> upsert(AppDatabase db, EntityType type, Json r) {
     switch (type) {
       case EntityType.profile:
@@ -74,7 +75,7 @@ abstract final class ServerRows {
                 id: r['id'] as String,
                 displayName: Value(r['display_name'] as String),
                 currencyCode: Value(r['currency_code'] as String),
-                freelancerEnabled: Value(r['freelancer_enabled'] as bool),
+                freelancerEnabled: Value(r['freelancer_enabled'] as bool? ?? false),
                 updatedAt: _ts(r['updated_at']),
                 changeSeq: Value(r['change_seq'] as int),
               ),
@@ -86,7 +87,7 @@ abstract final class ServerRows {
               CategoriesCompanion.insert(
                 id: r['id'] as String,
                 userId: r['user_id'] as String,
-                workspace: Value(r['workspace'] as String),
+                workspace: Value(r['workspace'] as String? ?? 'personal'),
                 name: r['name'] as String,
                 type: r['type'] as String,
                 iconKey: Value(r['icon_key'] as String),
@@ -105,7 +106,7 @@ abstract final class ServerRows {
               TransactionsCompanion.insert(
                 id: r['id'] as String,
                 userId: r['user_id'] as String,
-                workspace: Value(r['workspace'] as String),
+                workspace: Value(r['workspace'] as String? ?? 'personal'),
                 categoryId: Value(r['category_id'] as String?),
                 type: r['type'] as String,
                 amountMinor: r['amount_minor'] as int,
@@ -126,7 +127,7 @@ abstract final class ServerRows {
               BudgetsCompanion.insert(
                 id: r['id'] as String,
                 userId: r['user_id'] as String,
-                workspace: Value(r['workspace'] as String),
+                workspace: Value(r['workspace'] as String? ?? 'personal'),
                 categoryId: Value(r['category_id'] as String?),
                 name: r['name'] as String,
                 amountMinor: r['amount_minor'] as int,
