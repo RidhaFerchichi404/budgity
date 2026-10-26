@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Flutter only adds this to debug/profile; release builds need it for sign-in and sync. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Budgity"
         android:name="${applicationName}"
