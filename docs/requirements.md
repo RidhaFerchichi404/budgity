@@ -15,6 +15,19 @@
 | F9 | Sync status | Shows online/offline, pending count, last sync, failed ops, and conflicts. |
 | F10 | Platforms | All of the above works offline on Windows and Android. |
 
+## Functional (v2)
+
+| ID | Feature | Acceptance criteria |
+|---|---|---|
+| F11 | Workspaces | One account has Personal and, once enabled, Freelancer. Switching needs no sign-out. Data, totals and categories never mix. |
+| F12 | Clients and projects | Create, edit and archive offline. Archived ones keep their history. |
+| F13 | Invoices | Draft, issue (assigns a number), mark paid, void. Line items with quantity and unit price. Total computed, never typed. Overdue shown when issued and past due. |
+| F14 | Payments | Entered manually with client, optional project, amount, date, method, note. Not linked to invoices or transactions. |
+| F15 | Freelancer analytics | Invoiced vs. received per client and project, overdue invoices, income (payments + income transactions) and expenses, profit per project. |
+| F16 | Personal analytics | Month-over-month, spending by category, income vs. expense over time, budget health. Grouped by currency. |
+| F17 | Insights and suggestions | Rule-based observations (category up X% vs. last month, budget at 85%, overdue invoices). Category suggested from past descriptions. Offline. |
+| F18 | Ask Budgity | Natural-language questions answered from computed figures only. Shows the figures it used. Needs network; nothing else does. |
+
 P1 (later): savings goals, CSV export, analytics/charts, recurring transactions, currency conversion,
 local DB encryption.
 
