@@ -23,7 +23,7 @@ class ProfileRepository {
     if (displayName.trim().length > 100) throw const ValidationException('Name is too long');
     if (!Money.supportedCurrencies.contains(currencyCode)) throw const ValidationException('Unsupported currency');
     await _db.transaction(() async {
-      final current = await watchProfile().first;
+      final current = await (_db.select(_db.profiles)..where((p) => p.id.equals(_userId()))).getSingleOrNull();
       final row = Profile(
         id: _userId(),
         displayName: displayName.trim(),
