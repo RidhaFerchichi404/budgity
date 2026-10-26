@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "dev.mybudget" "\0"
+            VALUE "CompanyName", "Ridha Ferchichi" "\0"
             VALUE "FileDescription", "Budgity" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "mybudget" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 dev.mybudget. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Ridha Ferchichi. MIT License." "\0"
             VALUE "OriginalFilename", "mybudget.exe" "\0"
             VALUE "ProductName", "Budgity" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

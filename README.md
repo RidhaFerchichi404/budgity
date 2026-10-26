@@ -42,6 +42,18 @@ Run two "devices" on one PC: add `--dart-define=DB_NAME=device2` to a second ins
 Drift files (`*.g.dart`) are generated and committed. Never edit them by hand; regenerate with
 `dart run build_runner build`. CI fails if they are out of date.
 
+### Signed Windows release
+
+Unsigned builds trigger SmartScreen's "Unknown publisher" warning. To sign with the Certum
+open-source cert, connect SimplySign Desktop, then:
+
+```powershell
+flutter build windows --release --dart-define-from-file=env.json
+powershell -ExecutionPolicy Bypass -File tool/sign_windows.ps1
+```
+
+Distribute the signed `build/windows/x64/runner/Release` folder. CI artifacts stay unsigned.
+
 ## Tests
 
 - `flutter test`: unit and widget tests (money, repositories, sync engine with a fake server).
@@ -55,3 +67,7 @@ Drift files (`*.g.dart`) are generated and committed. Never edit them by hand; r
 [Database schema](docs/database-schema.md) · [Synchronization](docs/synchronization.md) ·
 [Security](docs/security.md) · [Testing](docs/testing.md) · [Roadmap](docs/development-roadmap.md) ·
 [Decisions](docs/decisions/)
+
+## License
+
+[MIT](LICENSE)
